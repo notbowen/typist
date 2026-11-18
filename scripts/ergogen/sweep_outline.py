@@ -2,12 +2,13 @@
 (github.com/davidphilipbarr/Sweep, Solderpad Hardware License 2.1) and emit it
 as ergogen polygon points, relative to the left pinky-bottom key.
 
-  python3 scripts/ergogen/sweep_outline.py /path/to/sweepv2.kicad_pcb > ergogen/sweep_outline.yaml
+  .venv/bin/python scripts/ergogen/sweep_outline.py /path/to/sweepv2.kicad_pcb > /tmp/outline.yaml
+  (needs shapely; paste the points into the board polygon in ergogen/config.yaml)
 
 Changes vs the original: the panel mouse-bites on the pinky edge are replaced by
-a straight edge, and the controller tab is widened by TAB_GROW mm on its outer
-side so a flat-mounted XIAO (pads + 0.5 mm edge clearance) clears the inner
-column keycaps.  Arcs are sampled every <= 3 degrees.
+a straight edge, the controller tab is widened by TAB_GROW mm on its outer side
+(XIAO pads + 0.5 mm edge clearance), and the pinky edge / inner notch are moved
+out ~2 mm for the reversible hotswap pads.  Arcs are sampled every <= 3 degrees.
 """
 import math
 import re
@@ -15,7 +16,18 @@ import sys
 
 PINKY_BOTTOM = (139.856, 83.382)      # left-half pinky bottom switch centre (KiCad)
 TAB_X = 236.0                         # points right of this belong to the controller tab
-TAB_GROW = 1.8
+TAB_GROW = 2.3
+# Reversible Kailh hotswap: every switch has socket pads on both faces, so one set
+# always faces an edge. Grow the pinky edge outward and push the inner-column notch
+# right so those pads keep 0.5 mm from Edge.Cuts (blended over a few mm, no steps).
+PINKY_GROW, PINKY_BLEND = 1.9, (131.6, 140.0)
+NOTCH_SHIFT = 2.0
+# outer thumb: whichever way its socket faces, one face's pad lands on the diagonal
+# edge below the controller tab -> push that edge out (KiCad coords, after TAB_GROW)
+DIAG = ((236.95 + TAB_GROW, 88.86), (226.45, 107.45))
+DIAG_GROW = 2.2
+ROUND = 1.0
+FILL = 3.0      # radius for filling the new inner corners
 X_MIN = 128.9                         # left half (in the reference panel)
 
 
@@ -71,6 +83,35 @@ def main(path):
     out = [p for p in out if not (p[0] < 131.45 and 41 < p[1] < 89)]
     # widen controller tab
     out = [(x + TAB_GROW, y) if x > TAB_X else (x, y) for x, y in out]
+    # grow the pinky edge (full shift at the edge, fading to 0 across the corner arcs)
+    def pinky(x):
+        a, b = PINKY_BLEND
+        return 1.0 if x <= a else max(0.0, (b - x) / (b - a))
+    out = [(x - PINKY_GROW * pinky(x), y) for x, y in out]
+    # push the inner-column notch (x~220, y<49.8 in KiCad coords) right
+    def notch(x, y):
+        if y > 49.8 or x > 224.2:
+            return 0.0
+        if x >= 219.5:
+            return 1.0
+        return max(0.0, (x - 212.0) / 7.5)     # fade along the top arc
+    out = [(x + NOTCH_SHIFT * notch(x, y), y) for x, y in out]
+    # push the thumb diagonal out, then round the new corners (closing + opening)
+    from shapely.geometry import MultiPoint, Polygon
+    (ax, ay), (bx, by) = DIAG
+    L = math.hypot(bx - ax, by - ay)
+    nx, ny = (by - ay) / L, -(bx - ax) / L          # right-hand normal = outward here
+    if nx < 0:
+        nx, ny = -nx, -ny
+    quad = Polygon([(ax, ay), (bx, by), (bx + nx * DIAG_GROW, by + ny * DIAG_GROW), (ax + nx * DIAG_GROW, ay + ny * DIAG_GROW)])
+    # bridge the old corner arc (tab side -> diagonal) so no notch is left behind
+    rx = 238.69 + TAB_GROW
+    a2 = (ax + nx * DIAG_GROW, ay + ny * DIAG_GROW)
+    bridge = MultiPoint([(rx, 81.5), (rx, a2[1]), a2, (ax, ay), (ax - 2, 81.5)]).convex_hull
+    poly = Polygon(out).union(quad).union(bridge)
+    poly = poly.buffer(FILL, quad_segs=8).buffer(-FILL, quad_segs=8)      # fill the new inner corners
+    poly = poly.buffer(-ROUND, quad_segs=8).buffer(ROUND, quad_segs=8)    # round the new outer corners
+    out = list(poly.simplify(0.02).exterior.coords)[:-1]
     # ergogen frame: relative to pinky bottom, y up
     px, py = PINKY_BOTTOM
     rel = [(round(x - px, 3), round(-(y - py), 3)) for x, y in out]

@@ -1,21 +1,21 @@
 # Sweep-style split keyboard
 
-PCB + 3D-printed case for a wireless 34-key split that keeps the Ferris Sweep 2
+One reversible PCB (order one design, flip a board for the right half) for a wireless 34-key split that keeps the Ferris Sweep 2
 shape (key positions and outline from the open-source
 [Sweep](https://github.com/davidphilipbarr/Sweep), Solderpad Hardware License 2.1),
-with a Seeed XIAO nRF52840 per half, a plug-in LiPo cell under the controller,
+with a Seeed XIAO nRF52840 per half, 4 status LEDs per half, a plug-in LiPo cell under the controller,
 Choc v1 hotswap sockets (Kailh Choc Sunset switches, blank white MBK caps) and ZMK firmware — plus a headless design-and-verify toolchain.
 
 ```sh
 make setup   # toolchain: Python venv, ergogen, KiCad 9 + JRE docker images, Freerouting
-make all     # layout -> PCBs (DRC, plots) -> case (fit check, mesh checks, slice, renders)
-make fab     # gerbers / drill / STEP in build/fab/ (JLCPCB: 2 layers, 1.6 mm)
+make all     # layout -> PCB (DRC, plots)
+make fab     # build/fab/sweep-gerbers.zip for JLCPCB (2 layers, 1.6 mm; 5 boards = 2 keyboards)
 make viewer  # interactive 3D viewer + spec/compatibility sheet (build/artifact/)
 ```
 
 - `ergogen/config.yaml` — key layout, board outlines, footprints and nets
 - `pcb/` — hand-edited / routed boards (take precedence over generated ones)
-- `cad/` — build123d case model driven by the exported PCB geometry
+- `cad/` — legacy 3D-printed case model (not used: the board runs without a case)
 - `scripts/` — KiCad wrappers, routing, DRC gate, mesh checks, slicing, renders, viewer
 - `firmware/zmk-config/` — ZMK shield (`sweep_xiao_left` / `_right`) and starter keymap
 

@@ -1,31 +1,39 @@
 # Ferris-Sweep-style 34-key wireless split (Choc spacing, 5x3 + 2 thumbs per half)
+# ONE REVERSIBLE PCB for both halves: order a single design, flip one board over for
+# the right half. Every part has pads on both faces; populate the face that is up
+# (XIAO, power switch, LEDs) or down (hotswap sockets, diodes, battery jack) for
+# that half.
 # - key positions and board outline follow the open-source Ferris Sweep 2.2
-#   (github.com/davidphilipbarr/Sweep, Solderpad Hardware License 2.1)
-# - controller: Seeed Studio XIAO nRF52840, flat SMD mount on the top side
-# - 4x5 diode matrix (XIAO has 11 GPIO, a 17-key half needs 9 with a matrix):
-#   columns C0..C4 (pinky..inner) = D0..D4, rows R0..R3 (top, home, bottom, thumb) = D5, D8, D9, D10
-# - LiPo cell under the controller tab on a JST-SH plug (detachable), side power switch
-# - no TRRS: halves talk over BLE (ZMK split)
+#   (github.com/davidphilipbarr/Sweep, Solderpad Hardware License 2.1); pinky edge,
+#   inner notch and controller tab grown ~2 mm for the double-sided hotswap pads
+# - controller: Seeed XIAO nRF52840, flat SMD mount
+# - 4x5 diode matrix: columns C0..C4 (pinky..inner) = D0..D4,
+#   rows R0..R3 (top, home, bottom, thumb) = D5, D8, D9, D10
+# - 4 status LEDs (0805 + 0805 resistor): LED1 = D6, LED2 = D7, LED3 = P0.09 (NFC1),
+#   LED4 = P0.10 (NFC2) - every XIAO GPIO is used
+# - LiPo on a JST-SH plug (bottom face), side power switch, no TRRS (ZMK BLE split)
 # All coordinates mirror the reference: ergogen (x, y) == KiCad (x, -y).
 meta:
   engine: 4.2.1
-  name: sweep-xiao-ble
-  version: 0.2.0
+  name: sweep-xiao-ble-reversible
+  version: 0.3.0
   author: lapiz
 
 units:
   kx: cx              # choc key spacing 18 x 17 mm
   ky: cy
   # controller-tab parts, relative to the pinky-bottom switch (mm, y up)
-  mcu_x: 90.094       # XIAO centre; USB-C face flush with the tab's top edge
-  mcu_y: 21.712
-  pwr_x: 98.544       # side-actuated power switch on the tab's outer edge
+  mcu_x: 91.294       # XIAO centre (tab widened 2.3 mm, XIAO pads clear the inner sockets)
+  mcu_y: 21.712       # USB-C face flush with the tab's top edge
+  pwr_x: 99.034       # side-actuated power switch on the tab's outer edge
   pwr_y: 6.382
   pwr_rot: -90
-  jst_x: 91.344       # battery connector on the back, cable entry facing the cell
+  jst_x: 92.544       # battery jack (bottom face), cable entry facing the cell
   jst_y: -5.118
   jst_rot: 0
-  jst_x_r: 88.844     # right half: same offset from the (unmirrored) XIAO as on the left
+  led_x: 83.344       # first status LED, under the XIAO; LEDs run left to right
+  led_y: 8.382
+  led_pitch: 3.6
 
 points:
   zones:
@@ -75,793 +83,224 @@ points:
           key.column_net: C4
       rows:
         cluster:
-  mirror:
-    ref: matrix_inner_home
-    distance: 80
 
 outlines:
-  left_board:
+  board:
     - what: polygon
       points:
         - ref: matrix_pinky_bottom
-          shift: [-8.347, 5.658]
+          shift: [-10.222, 43.296]
           resist: true
-        - shift: [-0.003, -11.823]
+        - shift: [-0.066, -0.37]
           resist: true
-        - shift: [0.01, -0.1]
+        - shift: [0.104, -8.328]
           resist: true
-        - shift: [0.015, -0.1]
+        - shift: [0.0, -23.838]
           resist: true
-        - shift: [0.021, -0.099]
+        - shift: [-0.063, -5.108]
           resist: true
-        - shift: [0.025, -0.098]
+        - shift: [-0.003, -11.717]
           resist: true
-        - shift: [0.03, -0.096]
+        - shift: [0.069, -0.485]
           resist: true
-        - shift: [0.035, -0.095]
+        - shift: [0.088, -0.224]
           resist: true
-        - shift: [0.04, -0.093]
+        - shift: [0.168, -0.272]
           resist: true
-        - shift: [0.044, -0.09]
+        - shift: [0.401, -0.407]
           resist: true
-        - shift: [0.049, -0.089]
+        - shift: [0.517, -0.308]
           resist: true
-        - shift: [0.053, -0.085]
+        - shift: [0.521, -0.17]
           resist: true
-        - shift: [0.058, -0.083]
+        - shift: [0.548, -0.069]
           resist: true
-        - shift: [0.062, -0.08]
+        - shift: [15.519, -0.325]
           resist: true
-        - shift: [0.066, -0.077]
+        - shift: [13.801, -0.913]
           resist: true
-        - shift: [0.069, -0.073]
+        - shift: [13.753, -1.501]
           resist: true
-        - shift: [0.074, -0.069]
+        - shift: [13.676, -2.088]
           resist: true
-        - shift: [0.076, -0.066]
+        - shift: [13.365, -2.625]
           resist: true
-        - shift: [0.08, -0.061]
+        - shift: [3.832, -1.127]
           resist: true
-        - shift: [0.083, -0.058]
+        - shift: [3.834, -1.336]
           resist: true
-        - shift: [0.086, -0.053]
+        - shift: [3.621, -1.452]
           resist: true
-        - shift: [0.088, -0.049]
+        - shift: [3.44, -1.561]
           resist: true
-        - shift: [0.091, -0.044]
+        - shift: [3.497, -1.779]
           resist: true
-        - shift: [0.093, -0.04]
+        - shift: [3.565, -2.025]
           resist: true
-        - shift: [0.095, -0.034]
+        - shift: [0.273, -0.127]
           resist: true
-        - shift: [0.096, -0.03]
+        - shift: [0.388, -0.101]
           resist: true
-        - shift: [0.098, -0.025]
+        - shift: [0.4, -0.021]
           resist: true
-        - shift: [0.099, -0.02]
+        - shift: [0.348, 0.048]
           resist: true
-        - shift: [0.1, -0.015]
+        - shift: [0.7, 0.185]
           resist: true
-        - shift: [0.1, -0.01]
+        - shift: [0.659, 0.039]
           resist: true
-        - shift: [0.101, -0.005]
+        - shift: [0.468, -0.061]
           resist: true
-        - shift: [0.101, 0.001]
+        - shift: [0.581, -0.183]
           resist: true
-        - shift: [13.831, -0.32]
+        - shift: [0.362, -0.049]
           resist: true
-        - shift: [13.805, -0.911]
+        - shift: [0.356, 0.084]
           resist: true
-        - shift: [13.753, -1.498]
+        - shift: [0.302, 0.207]
           resist: true
-        - shift: [13.677, -2.085]
+        - shift: [0.117, 0.141]
           resist: true
-        - shift: [13.575, -2.667]
+        - shift: [12.108, 17.584]
           resist: true
-        - shift: [3.75, -1.119]
+        - shift: [0.098, 0.179]
           resist: true
-        - shift: [3.695, -1.287]
+        - shift: [0.059, 0.194]
           resist: true
-        - shift: [3.632, -1.454]
+        - shift: [0.019, 0.203]
           resist: true
-        - shift: [3.564, -1.616]
+        - shift: [-0.066, 7.956]
           resist: true
-        - shift: [3.486, -1.777]
+        - shift: [-0.005, 31.144]
           resist: true
-        - shift: [3.402, -1.933]
+        - shift: [-0.076, 0.383]
           resist: true
-        - shift: [0.086, -0.052]
+        - shift: [-0.217, 0.324]
           resist: true
-        - shift: [0.088, -0.048]
+        - shift: [-0.152, 0.124]
           resist: true
-        - shift: [0.09, -0.044]
+        - shift: [-0.172, 0.093]
           resist: true
-        - shift: [0.093, -0.039]
+        - shift: [-0.383, 0.076]
           resist: true
-        - shift: [0.094, -0.034]
+        - shift: [-15.014, 0.0]
           resist: true
-        - shift: [0.096, -0.029]
+        - shift: [-0.608, 0.069]
           resist: true
-        - shift: [0.098, -0.024]
+        - shift: [-0.559, 0.18]
           resist: true
-        - shift: [0.098, -0.019]
+        - shift: [-0.513, 0.285]
           resist: true
-        - shift: [0.099, -0.014]
+        - shift: [-0.448, 0.38]
           resist: true
-        - shift: [0.1, -0.009]
+        - shift: [-0.365, 0.46]
           resist: true
-        - shift: [0.101, -0.004]
+        - shift: [-0.269, 0.522]
           resist: true
-        - shift: [0.1, 0.001]
+        - shift: [-0.161, 0.565]
           resist: true
-        - shift: [0.1, 0.006]
+        - shift: [-0.051, 0.512]
           resist: true
-        - shift: [0.1, 0.011]
+        - shift: [-0.002, 16.077]
           resist: true
-        - shift: [0.099, 0.017]
+        - shift: [-0.069, 0.365]
           resist: true
-        - shift: [0.098, 0.021]
+        - shift: [-0.084, 0.166]
           resist: true
-        - shift: [0.097, 0.027]
+        - shift: [-0.113, 0.148]
           resist: true
-        - shift: [0.095, 0.031]
+        - shift: [-0.299, 0.221]
           resist: true
-        - shift: [0.094, 0.036]
+        - shift: [-14.133, 3.854]
           resist: true
-        - shift: [0.091, 0.041]
+        - shift: [-6.23, 1.516]
           resist: true
-        - shift: [0.09, 0.046]
+        - shift: [-6.319, 1.243]
           resist: true
-        - shift: [0.087, 0.05]
+        - shift: [-6.323, 0.954]
           resist: true
-        - shift: [0.084, 0.054]
+        - shift: [-6.307, 0.665]
           resist: true
-        - shift: [0.081, 0.059]
+        - shift: [-3.99, 0.002]
           resist: true
-        - shift: [0.079, 0.063]
+        - shift: [-3.478, -0.076]
           resist: true
-        - shift: [0.075, 0.066]
+        - shift: [-3.613, -0.265]
           resist: true
-        - shift: [0.071, 0.071]
+        - shift: [-3.466, -0.435]
           resist: true
-        - shift: [0.068, 0.074]
+        - shift: [-3.39, -0.601]
           resist: true
-        - shift: [0.064, 0.077]
+        - shift: [-3.505, -0.807]
           resist: true
-        - shift: [0.06, 0.08]
+        - shift: [-3.335, -0.952]
           resist: true
-        - shift: [0.056, 0.084]
+        - shift: [-3.307, -1.128]
           resist: true
-        - shift: [12.307, 18.593]
+        - shift: [-3.34, -1.335]
           resist: true
-        - shift: [0.356, 0.765]
+        - shift: [-3.15, -1.451]
           resist: true
-        - shift: [0.317, 0.782]
+        - shift: [-3.118, -1.633]
           resist: true
-        - shift: [0.277, 0.797]
+        - shift: [-6.324, -3.739]
           resist: true
-        - shift: [0.237, 0.81]
+        - shift: [-3.444, -2.076]
           resist: true
-        - shift: [0.196, 0.82]
+        - shift: [-3.556, -2.376]
           resist: true
-        - shift: [0.154, 0.83]
+        - shift: [-0.356, -0.266]
           resist: true
-        - shift: [0.112, 0.836]
+        - shift: [-0.358, -0.327]
           resist: true
-        - shift: [0.07, 0.841]
+        - shift: [-0.331, -0.382]
           resist: true
-        - shift: [0.028, 0.843]
-          resist: true
-        - shift: [-0.012, 6.096]
-          resist: true
-        - shift: [0.0, 8.89]
-          resist: true
-        - shift: [0.0, 8.128]
-          resist: true
-        - shift: [0.0, 7.978]
-          resist: true
-        - shift: [-0.004, 0.078]
-          resist: true
-        - shift: [-0.012, 0.078]
-          resist: true
-        - shift: [-0.021, 0.076]
-          resist: true
-        - shift: [-0.028, 0.073]
-          resist: true
-        - shift: [-0.035, 0.07]
-          resist: true
-        - shift: [-0.043, 0.066]
-          resist: true
-        - shift: [-0.05, 0.061]
-          resist: true
-        - shift: [-0.055, 0.055]
-          resist: true
-        - shift: [-0.061, 0.05]
-          resist: true
-        - shift: [-0.066, 0.043]
-          resist: true
-        - shift: [-0.07, 0.035]
-          resist: true
-        - shift: [-0.073, 0.028]
-          resist: true
-        - shift: [-0.076, 0.021]
-          resist: true
-        - shift: [-0.078, 0.012]
-          resist: true
-        - shift: [-0.078, 0.004]
-          resist: true
-        - shift: [-17.705, -0.003]
-          resist: true
-        - shift: [-0.104, 0.001]
-          resist: true
-        - shift: [-0.103, 0.006]
-          resist: true
-        - shift: [-0.103, 0.012]
-          resist: true
-        - shift: [-0.102, 0.017]
-          resist: true
-        - shift: [-0.101, 0.022]
-          resist: true
-        - shift: [-0.1, 0.027]
-          resist: true
-        - shift: [-0.099, 0.033]
-          resist: true
-        - shift: [-0.096, 0.037]
-          resist: true
-        - shift: [-0.095, 0.043]
-          resist: true
-        - shift: [-0.092, 0.047]
-          resist: true
-        - shift: [-0.09, 0.052]
-          resist: true
-        - shift: [-0.086, 0.057]
-          resist: true
-        - shift: [-0.084, 0.061]
-          resist: true
-        - shift: [-0.08, 0.065]
-          resist: true
-        - shift: [-0.077, 0.069]
-          resist: true
-        - shift: [-0.074, 0.074]
-          resist: true
-        - shift: [-0.069, 0.076]
-          resist: true
-        - shift: [-0.065, 0.081]
-          resist: true
-        - shift: [-0.062, 0.084]
-          resist: true
-        - shift: [-0.056, 0.086]
-          resist: true
-        - shift: [-0.052, 0.09]
-          resist: true
-        - shift: [-0.048, 0.092]
-          resist: true
-        - shift: [-0.042, 0.094]
-          resist: true
-        - shift: [-0.038, 0.097]
-          resist: true
-        - shift: [-0.032, 0.098]
-          resist: true
-        - shift: [-0.028, 0.1]
-          resist: true
-        - shift: [-0.022, 0.101]
-          resist: true
-        - shift: [-0.017, 0.103]
-          resist: true
-        - shift: [-0.012, 0.103]
-          resist: true
-        - shift: [-0.006, 0.103]
-          resist: true
-        - shift: [0.0, 17.325]
-          resist: true
-        - shift: [-0.004, 0.077]
-          resist: true
-        - shift: [-0.012, 0.077]
-          resist: true
-        - shift: [-0.02, 0.074]
-          resist: true
-        - shift: [-0.027, 0.073]
-          resist: true
-        - shift: [-0.035, 0.069]
-          resist: true
-        - shift: [-0.042, 0.065]
-          resist: true
-        - shift: [-0.048, 0.061]
-          resist: true
-        - shift: [-0.054, 0.055]
-          resist: true
-        - shift: [-0.06, 0.05]
-          resist: true
-        - shift: [-0.064, 0.043]
-          resist: true
-        - shift: [-0.069, 0.036]
-          resist: true
-        - shift: [-6.075, 2.068]
-          resist: true
-        - shift: [-6.161, 1.796]
-          resist: true
-        - shift: [-6.235, 1.519]
-          resist: true
-        - shift: [-6.297, 1.24]
-          resist: true
-        - shift: [-6.345, 0.959]
-          resist: true
-        - shift: [-6.382, 0.674]
-          resist: true
-        - shift: [-3.948, -0.005]
-          resist: true
-        - shift: [-3.518, -0.077]
-          resist: true
-        - shift: [-3.511, -0.257]
-          resist: true
-        - shift: [-3.492, -0.437]
-          resist: true
-        - shift: [-3.466, -0.615]
-          resist: true
-        - shift: [-3.429, -0.791]
-          resist: true
-        - shift: [-3.385, -0.966]
-          resist: true
-        - shift: [-3.331, -1.138]
-          resist: true
-        - shift: [-3.268, -1.307]
-          resist: true
-        - shift: [-3.196, -1.472]
-          resist: true
-        - shift: [-3.118, -1.635]
-          resist: true
-        - shift: [-3.029, -1.791]
-          resist: true
-        - shift: [-2.934, -1.945]
-          resist: true
-        - shift: [-2.83, -2.092]
-          resist: true
-        - shift: [-2.72, -2.234]
-          resist: true
-        - shift: [-0.164, -0.13]
-          resist: true
-        - shift: [-0.156, -0.138]
-          resist: true
-        - shift: [-0.15, -0.146]
-          resist: true
-        - shift: [-0.141, -0.154]
-          resist: true
-        - shift: [-0.134, -0.161]
-          resist: true
-        - shift: [-0.125, -0.167]
-          resist: true
-        - shift: [-0.116, -0.173]
-          resist: true
-        - shift: [-0.108, -0.18]
-          resist: true
-        - shift: [-0.098, -0.184]
-          resist: true
-        - shift: [-0.088, -0.19]
-          resist: true
-        - shift: [-0.079, -0.193]
-          resist: true
-        - shift: [-0.068, -0.198]
-          resist: true
-        - shift: [0.106, -8.489]
-          resist: true
-        - shift: [0.0, -5.08]
-          resist: true
-        - shift: [0.0, -18.796]
-          resist: true
-  right_board:
-    - what: polygon
-      points:
-        - ref: mirror_matrix_pinky_bottom
-          shift: [8.347, 5.658]
-          resist: true
-        - shift: [0.003, -11.823]
-          resist: true
-        - shift: [-0.01, -0.1]
-          resist: true
-        - shift: [-0.015, -0.1]
-          resist: true
-        - shift: [-0.021, -0.099]
-          resist: true
-        - shift: [-0.025, -0.098]
-          resist: true
-        - shift: [-0.03, -0.096]
-          resist: true
-        - shift: [-0.035, -0.095]
-          resist: true
-        - shift: [-0.04, -0.093]
-          resist: true
-        - shift: [-0.044, -0.09]
-          resist: true
-        - shift: [-0.049, -0.089]
-          resist: true
-        - shift: [-0.053, -0.085]
-          resist: true
-        - shift: [-0.058, -0.083]
-          resist: true
-        - shift: [-0.062, -0.08]
-          resist: true
-        - shift: [-0.066, -0.077]
-          resist: true
-        - shift: [-0.069, -0.073]
-          resist: true
-        - shift: [-0.074, -0.069]
-          resist: true
-        - shift: [-0.076, -0.066]
-          resist: true
-        - shift: [-0.08, -0.061]
-          resist: true
-        - shift: [-0.083, -0.058]
-          resist: true
-        - shift: [-0.086, -0.053]
-          resist: true
-        - shift: [-0.088, -0.049]
-          resist: true
-        - shift: [-0.091, -0.044]
-          resist: true
-        - shift: [-0.093, -0.04]
-          resist: true
-        - shift: [-0.095, -0.034]
-          resist: true
-        - shift: [-0.096, -0.03]
-          resist: true
-        - shift: [-0.098, -0.025]
-          resist: true
-        - shift: [-0.099, -0.02]
-          resist: true
-        - shift: [-0.1, -0.015]
-          resist: true
-        - shift: [-0.1, -0.01]
-          resist: true
-        - shift: [-0.101, -0.005]
-          resist: true
-        - shift: [-0.101, 0.001]
-          resist: true
-        - shift: [-13.831, -0.32]
-          resist: true
-        - shift: [-13.805, -0.911]
-          resist: true
-        - shift: [-13.753, -1.498]
-          resist: true
-        - shift: [-13.677, -2.085]
-          resist: true
-        - shift: [-13.575, -2.667]
-          resist: true
-        - shift: [-3.75, -1.119]
-          resist: true
-        - shift: [-3.695, -1.287]
-          resist: true
-        - shift: [-3.632, -1.454]
-          resist: true
-        - shift: [-3.564, -1.616]
-          resist: true
-        - shift: [-3.486, -1.777]
-          resist: true
-        - shift: [-3.402, -1.933]
-          resist: true
-        - shift: [-0.086, -0.052]
-          resist: true
-        - shift: [-0.088, -0.048]
-          resist: true
-        - shift: [-0.09, -0.044]
-          resist: true
-        - shift: [-0.093, -0.039]
-          resist: true
-        - shift: [-0.094, -0.034]
-          resist: true
-        - shift: [-0.096, -0.029]
-          resist: true
-        - shift: [-0.098, -0.024]
-          resist: true
-        - shift: [-0.098, -0.019]
-          resist: true
-        - shift: [-0.099, -0.014]
-          resist: true
-        - shift: [-0.1, -0.009]
-          resist: true
-        - shift: [-0.101, -0.004]
-          resist: true
-        - shift: [-0.1, 0.001]
-          resist: true
-        - shift: [-0.1, 0.006]
-          resist: true
-        - shift: [-0.1, 0.011]
-          resist: true
-        - shift: [-0.099, 0.017]
-          resist: true
-        - shift: [-0.098, 0.021]
-          resist: true
-        - shift: [-0.097, 0.027]
-          resist: true
-        - shift: [-0.095, 0.031]
-          resist: true
-        - shift: [-0.094, 0.036]
-          resist: true
-        - shift: [-0.091, 0.041]
-          resist: true
-        - shift: [-0.09, 0.046]
-          resist: true
-        - shift: [-0.087, 0.05]
-          resist: true
-        - shift: [-0.084, 0.054]
-          resist: true
-        - shift: [-0.081, 0.059]
-          resist: true
-        - shift: [-0.079, 0.063]
-          resist: true
-        - shift: [-0.075, 0.066]
-          resist: true
-        - shift: [-0.071, 0.071]
-          resist: true
-        - shift: [-0.068, 0.074]
-          resist: true
-        - shift: [-0.064, 0.077]
-          resist: true
-        - shift: [-0.06, 0.08]
-          resist: true
-        - shift: [-0.056, 0.084]
-          resist: true
-        - shift: [-12.307, 18.593]
-          resist: true
-        - shift: [-0.356, 0.765]
-          resist: true
-        - shift: [-0.317, 0.782]
-          resist: true
-        - shift: [-0.277, 0.797]
-          resist: true
-        - shift: [-0.237, 0.81]
-          resist: true
-        - shift: [-0.196, 0.82]
-          resist: true
-        - shift: [-0.154, 0.83]
-          resist: true
-        - shift: [-0.112, 0.836]
-          resist: true
-        - shift: [-0.07, 0.841]
-          resist: true
-        - shift: [-0.028, 0.843]
-          resist: true
-        - shift: [0.012, 6.096]
-          resist: true
-        - shift: [-0.0, 8.89]
-          resist: true
-        - shift: [-0.0, 8.128]
-          resist: true
-        - shift: [-0.0, 7.978]
-          resist: true
-        - shift: [0.004, 0.078]
-          resist: true
-        - shift: [0.012, 0.078]
-          resist: true
-        - shift: [0.021, 0.076]
-          resist: true
-        - shift: [0.028, 0.073]
-          resist: true
-        - shift: [0.035, 0.07]
-          resist: true
-        - shift: [0.043, 0.066]
-          resist: true
-        - shift: [0.05, 0.061]
-          resist: true
-        - shift: [0.055, 0.055]
-          resist: true
-        - shift: [0.061, 0.05]
-          resist: true
-        - shift: [0.066, 0.043]
-          resist: true
-        - shift: [0.07, 0.035]
-          resist: true
-        - shift: [0.073, 0.028]
-          resist: true
-        - shift: [0.076, 0.021]
-          resist: true
-        - shift: [0.078, 0.012]
-          resist: true
-        - shift: [0.078, 0.004]
-          resist: true
-        - shift: [17.705, -0.003]
-          resist: true
-        - shift: [0.104, 0.001]
-          resist: true
-        - shift: [0.103, 0.006]
-          resist: true
-        - shift: [0.103, 0.012]
-          resist: true
-        - shift: [0.102, 0.017]
-          resist: true
-        - shift: [0.101, 0.022]
-          resist: true
-        - shift: [0.1, 0.027]
-          resist: true
-        - shift: [0.099, 0.033]
-          resist: true
-        - shift: [0.096, 0.037]
-          resist: true
-        - shift: [0.095, 0.043]
-          resist: true
-        - shift: [0.092, 0.047]
-          resist: true
-        - shift: [0.09, 0.052]
-          resist: true
-        - shift: [0.086, 0.057]
-          resist: true
-        - shift: [0.084, 0.061]
-          resist: true
-        - shift: [0.08, 0.065]
-          resist: true
-        - shift: [0.077, 0.069]
-          resist: true
-        - shift: [0.074, 0.074]
-          resist: true
-        - shift: [0.069, 0.076]
-          resist: true
-        - shift: [0.065, 0.081]
-          resist: true
-        - shift: [0.062, 0.084]
-          resist: true
-        - shift: [0.056, 0.086]
-          resist: true
-        - shift: [0.052, 0.09]
-          resist: true
-        - shift: [0.048, 0.092]
-          resist: true
-        - shift: [0.042, 0.094]
-          resist: true
-        - shift: [0.038, 0.097]
-          resist: true
-        - shift: [0.032, 0.098]
-          resist: true
-        - shift: [0.028, 0.1]
-          resist: true
-        - shift: [0.022, 0.101]
-          resist: true
-        - shift: [0.017, 0.103]
-          resist: true
-        - shift: [0.012, 0.103]
-          resist: true
-        - shift: [0.006, 0.103]
-          resist: true
-        - shift: [-0.0, 17.325]
-          resist: true
-        - shift: [0.004, 0.077]
-          resist: true
-        - shift: [0.012, 0.077]
-          resist: true
-        - shift: [0.02, 0.074]
-          resist: true
-        - shift: [0.027, 0.073]
-          resist: true
-        - shift: [0.035, 0.069]
-          resist: true
-        - shift: [0.042, 0.065]
-          resist: true
-        - shift: [0.048, 0.061]
-          resist: true
-        - shift: [0.054, 0.055]
-          resist: true
-        - shift: [0.06, 0.05]
-          resist: true
-        - shift: [0.064, 0.043]
-          resist: true
-        - shift: [0.069, 0.036]
-          resist: true
-        - shift: [6.075, 2.068]
-          resist: true
-        - shift: [6.161, 1.796]
-          resist: true
-        - shift: [6.235, 1.519]
-          resist: true
-        - shift: [6.297, 1.24]
-          resist: true
-        - shift: [6.345, 0.959]
-          resist: true
-        - shift: [6.382, 0.674]
-          resist: true
-        - shift: [3.948, -0.005]
-          resist: true
-        - shift: [3.518, -0.077]
-          resist: true
-        - shift: [3.511, -0.257]
-          resist: true
-        - shift: [3.492, -0.437]
-          resist: true
-        - shift: [3.466, -0.615]
-          resist: true
-        - shift: [3.429, -0.791]
-          resist: true
-        - shift: [3.385, -0.966]
-          resist: true
-        - shift: [3.331, -1.138]
-          resist: true
-        - shift: [3.268, -1.307]
-          resist: true
-        - shift: [3.196, -1.472]
-          resist: true
-        - shift: [3.118, -1.635]
-          resist: true
-        - shift: [3.029, -1.791]
-          resist: true
-        - shift: [2.934, -1.945]
-          resist: true
-        - shift: [2.83, -2.092]
-          resist: true
-        - shift: [2.72, -2.234]
-          resist: true
-        - shift: [0.164, -0.13]
-          resist: true
-        - shift: [0.156, -0.138]
-          resist: true
-        - shift: [0.15, -0.146]
-          resist: true
-        - shift: [0.141, -0.154]
-          resist: true
-        - shift: [0.134, -0.161]
-          resist: true
-        - shift: [0.125, -0.167]
-          resist: true
-        - shift: [0.116, -0.173]
-          resist: true
-        - shift: [0.108, -0.18]
-          resist: true
-        - shift: [0.098, -0.184]
-          resist: true
-        - shift: [0.088, -0.19]
-          resist: true
-        - shift: [0.079, -0.193]
-          resist: true
-        - shift: [0.068, -0.198]
-          resist: true
-        - shift: [-0.106, -8.489]
-          resist: true
-        - shift: [-0.0, -5.08]
-          resist: true
-        - shift: [-0.0, -18.796]
+        - shift: [-0.264, -0.391]
           resist: true
 
 pcbs:
-# Socket orientation follows the Sweep Bling LP (Kailh hotswap variant): every
-# hotswap socket faces away from the nearest board edge.
-  left:
+# Socket orientation follows the Sweep Bling LP; with pads on both faces one set
+# faces an edge, which is why the outline is grown there.
+  sweep:
     template: kicad8
     outlines:
       edge:
-        outline: left_board
+        outline: board
     footprints:
       keys_a:
-        what: choc
-        where: "/^matrix_pinky_/"
+        what: choc_rev
+        where: "/^(matrix_pinky|thumb_reachy)_/"
         adjust:
           rotate: 0
         params:
-          hotswap: true
-          keycaps: true
           from: "{{column_net}}"
           to: "{{name}}"
       diodes_a:
         what: diode_sod123
-        where: "/^matrix_pinky_/"
+        where: "/^(matrix_pinky|thumb_reachy)_/"
         adjust:
           shift: [0, -5]
           rotate: 0
         params:
+          reversible: true
           from: "{{name}}"
           to: "{{row_net}}"
       keys_b:
-        what: choc
-        where: "/^(matrix_(ring|middle|index|inner)|thumb)_/"
+        what: choc_rev
+        where: "/^(matrix_(ring|middle|index|inner)|thumb_tucky)_/"
         adjust:
           rotate: 180
         params:
-          hotswap: true
-          keycaps: true
           from: "{{column_net}}"
           to: "{{name}}"
       diodes_b:
         what: diode_sod123
-        where: "/^(matrix_(ring|middle|index|inner)|thumb)_/"
+        where: "/^(matrix_(ring|middle|index|inner)|thumb_tucky)_/"
         adjust:
           shift: [0, 5]
           rotate: 180
         params:
+          reversible: true
           from: "{{name}}"
           to: "{{row_net}}"
       hole1:
@@ -879,12 +318,49 @@ pcbs:
         where: matrix_pinky_bottom
         adjust:
           shift: [10.623, 0.962]
+      led1:
+        what: led_0805
+        where: matrix_pinky_bottom
+        adjust:
+          shift: [led_x + 0 * led_pitch, led_y]
+        params:
+          gpio: LED1
+          mid: LED1_A
+          gnd: GND
+      led2:
+        what: led_0805
+        where: matrix_pinky_bottom
+        adjust:
+          shift: [led_x + 1 * led_pitch, led_y]
+        params:
+          gpio: LED2
+          mid: LED2_A
+          gnd: GND
+      led3:
+        what: led_0805
+        where: matrix_pinky_bottom
+        adjust:
+          shift: [led_x + 2 * led_pitch, led_y]
+        params:
+          gpio: LED3
+          mid: LED3_A
+          gnd: GND
+      led4:
+        what: led_0805
+        where: matrix_pinky_bottom
+        adjust:
+          shift: [led_x + 3 * led_pitch, led_y]
+        params:
+          gpio: LED4
+          mid: LED4_A
+          gnd: GND
       mcu:
         what: xiao_nrf52840
         where: matrix_pinky_bottom
         adjust:
           shift: [mcu_x, mcu_y]
         params:
+          reversible: true
           D0: C0
           D1: C1
           D2: C2
@@ -894,15 +370,17 @@ pcbs:
           D8: R1
           D9: R2
           D10: R3
-          D6: ""             # D6/D7 = UART TX/RX, left free
-          D7: ""
+          D6: LED1
+          D7: LED2
+          NFC1: LED3
+          NFC2: LED4
           V5: ""
           V3: ""
           GND: GND
           BATP: BAT_SW
           BATN: GND
       power:
-        what: slider
+        what: power_switch_rev
         where: matrix_pinky_bottom
         adjust:
           shift: [pwr_x, pwr_y]
@@ -917,124 +395,6 @@ pcbs:
           shift: [jst_x, jst_y]
           rotate: jst_rot
         params:
-          pos: BAT_RAW
-          neg: GND
-
-  right:
-    template: kicad8
-    outlines:
-      edge:
-        outline: right_board
-    footprints:
-      keys_a:
-        what: choc
-        where: "/^mirror_matrix_inner_/"
-        adjust:
-          rotate: 0
-        params:
-          hotswap: true
-          keycaps: true
-          from: "{{column_net}}"
-          to: "{{name}}"
-      diodes_a:
-        what: diode_sod123
-        where: "/^mirror_matrix_inner_/"
-        adjust:
-          shift: [0, -5]
-          rotate: 0
-        params:
-          from: "{{name}}"
-          to: "{{row_net}}"
-      keys_b:
-        what: choc
-        where: "/^mirror_matrix_(pinky|ring|middle|index)_/"
-        adjust:
-          rotate: 180
-        params:
-          hotswap: true
-          keycaps: true
-          from: "{{column_net}}"
-          to: "{{name}}"
-      diodes_b:
-        what: diode_sod123
-        where: "/^mirror_matrix_(pinky|ring|middle|index)_/"
-        adjust:
-          shift: [0, 5]
-          rotate: 180
-        params:
-          from: "{{name}}"
-          to: "{{row_net}}"
-      keys_c:
-        what: choc
-        where: "/^mirror_thumb_/"
-        adjust:
-          rotate: 0
-        params:
-          hotswap: true
-          keycaps: true
-          from: "{{column_net}}"
-          to: "{{name}}"
-      diodes_c:
-        what: diode_sod123
-        where: "/^mirror_thumb_/"
-        adjust:
-          shift: [0, -5]
-          rotate: 0
-        params:
-          from: "{{name}}"
-          to: "{{row_net}}"
-      hole1:
-        what: mounting_hole
-        where: mirror_matrix_pinky_bottom
-        adjust:
-          shift: [64.062, 55.188]
-      hole2:
-        what: mounting_hole
-        where: mirror_matrix_pinky_bottom
-        adjust:
-          shift: [7.049, 45.028]
-      hole3:
-        what: mounting_hole
-        where: mirror_matrix_pinky_bottom
-        adjust:
-          shift: [10.623, 0.962]
-      mcu:
-        what: xiao_nrf52840
-        where: mirror_matrix_pinky_bottom
-        adjust:
-          shift: [mcu_x, mcu_y]
-        params:
-          D0: C0
-          D1: C1
-          D2: C2
-          D3: C3
-          D4: C4
-          D5: R0
-          D8: R1
-          D9: R2
-          D10: R3
-          D6: ""             # D6/D7 = UART TX/RX, left free
-          D7: ""
-          V5: ""
-          V3: ""
-          GND: GND
-          BATP: BAT_SW
-          BATN: GND
-      power:
-        what: slider
-        where: mirror_matrix_pinky_bottom
-        adjust:
-          shift: [pwr_x, pwr_y]
-          rotate: pwr_rot
-        params:
-          from: BAT_RAW
-          to: BAT_SW
-      battery:
-        what: jst_sh2
-        where: mirror_matrix_pinky_bottom
-        adjust:
-          shift: [jst_x_r, jst_y]
-          rotate: jst_rot
-        params:
+          reversible: true
           pos: BAT_RAW
           neg: GND

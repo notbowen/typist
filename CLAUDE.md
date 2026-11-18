@@ -1,11 +1,14 @@
-# Sweep-style split keyboard — PCB + 3D-printed case
+# Sweep-style split keyboard — one reversible PCB
 
-Design and verify the PCBs and printed case for a wireless Ferris-Sweep-style
-34-key split: Sweep 2.2 key positions + outline (open source, Solderpad 2.1),
-Choc v1 hotswap (Kailh Choc Sunset switches, blank white MBK caps — the parts the owner bought
-from SplitKB), Seeed XIAO nRF52840 per half (SMD, flat), 4x5 diode matrix,
-plug-in LiPo (JST-SH) under the controller tab, side power switch, ZMK BLE split
-(no TRRS). Everything runs headless; every design change should be verified with
+Design and verify ONE reversible PCB (`sweep`) for a wireless Ferris-Sweep-style 34-key
+split: the right half is the same board flipped over, so a single JLCPCB order covers
+both halves. Sweep 2.2 key positions + outline (open source, Solderpad 2.1; pinky edge,
+inner notch, controller tab and thumb diagonal grown ~2 mm for double-sided pads),
+Choc v1 hotswap (Kailh Choc Sunset switches, blank white MBK caps — the parts the owner
+bought from SplitKB), Seeed XIAO nRF52840 per half (SMD, flat), 4x5 diode matrix,
+4 status LEDs, plug-in LiPo (JST-SH) under the controller tab, side power switch,
+ZMK BLE split (no TRRS). **No case**: the owner uses the bare PCB on feet.
+The cad/ case pipeline still exists but is not part of `all`/`verify`. Everything runs headless; every design change should be verified with
 the commands below and by **looking at the rendered PNGs** (Read them).
 
 ## Pipeline
@@ -27,19 +30,18 @@ cad/ (build123d) case from the real PCB outline ──► build/cad/<side>/case.
 | | |
 |---|---|
 | `make setup` | install/verify toolchain (idempotent) |
-| `make all` | ergogen → PCB checks → case build/verify for both halves (~2.5 min) |
+| `make all` | ergogen → PCB checks |
 | `make ergogen` | regenerate layout; outlines in `build/ergogen/outlines/`, points in `build/ergogen/points/` |
 | `make pcb` / `make pcb-strict` | DRC gate (+ unrouted fails with strict), 2D/3D plots, geometry export |
-| `make route SIDE=left` | Freerouting, then GND pour (~5 min) → `build/pcb/left-routed.kicad_pcb` |
+| `make route SIDE=sweep` | Freerouting, then GND pour (~10 min) → `build/pcb/sweep-routed.kicad_pcb` |
 | `make fab` | gerbers+drill zip, pos csv, board STEP → `build/fab/` |
-| `make case` | case build + fit check + mesh checks + slice + renders |
-| `make verify` | release gate: `pcb-strict` + `case` |
-| `SIDES=left make case` | limit to one half |
+| `make case` | (legacy, not maintained for the reversible board) case build + checks |
+| `make verify` | release gate: `pcb-strict` |
 | `make viewer` | interactive HTML viewer + spec sheet → `build/artifact/sweep-xiao.html` (needs `make pcb case` outputs) |
 
 Look at after changes:
-- `build/pcb/<side>-2d.png` — outline, pads, tracks, silk (fastest PCB sanity view)
-- `build/pcb/<side>-3d-{top,bottom}.png` — KiCad 3D render
+- `build/pcb/sweep-2d.png` — outline, pads, tracks, silk (fastest PCB sanity view)
+- `build/pcb/sweep-3d-{top,bottom}.png` — KiCad 3D render (bottom = how the right half looks from above)
 - `build/cad/<side>/plot2d.png` — case walls vs PCB vs under-board parts vs cable keep-outs
 - `build/cad/<side>/assembly.png`, `case.png` — 3D renders
 - `build/cad/<side>/fit.json`, `mesh.json`, `build/pcb/<side>-drc.json` — machine-readable results
@@ -74,11 +76,18 @@ Look at after changes:
 - Outline: `scripts/ergogen/sweep_outline.py` converts the Sweep 2.2 Edge.Cuts into the ergogen
   polygon in `config.yaml` (controller tab widened 1.8 mm for the XIAO). Socket orientation per
   column follows the Sweep Bling LP (sockets face away from board edges).
-- Custom footprints live in `ergogen/footprints/` (XIAO, SOD-123, JST-SH, mounting hole).
-- The XIAO is not mirrored on the right half (it's a top-mounted module), so its BAT pads, the
-  battery cell (always on the XIAO's +x side) and the right JST (`jst_x_r`) are placed explicitly.
-- Matrix pins: cols D0-D4, rows D5/D8/D9/D10 (D6/D7 = UART left free). Must match
-  `firmware/zmk-config/config/boards/shields/sweep_xiao/sweep_xiao.dtsi`.
+- Custom footprints live in `ergogen/footprints/`, all reversible (pads on both faces):
+  `choc_rev` (Kailh hotswap both faces, narrowed inner pads clear the opposite socket hole),
+  `xiao_nrf52840` (`reversible: true`: F pads at the normal spot + B pads mirrored, same net per
+  XIAO pin, so both halves share one pin map; BAT±/NFC pads by plated through-holes on both
+  sides), `diode_sod123`, `jst_sh2`, `power_switch_rev` (MSK12C02), `led_0805` (LED + series R).
+  Pads at the same x/y on opposite faces may carry different nets (XIAO) — they are SMD, so this
+  is fine as long as nothing puts a via there.
+- Left half: switches/XIAO/LEDs/power switch on F, sockets/diodes/JST on B. Right half: flipped.
+- Pins (all 11 GPIO + both NFC pads used): cols D0-D4, rows D5/D8/D9/D10, LEDs D6, D7, P0.09,
+  P0.10. Must match `firmware/zmk-config/config/boards/shields/sweep_xiao/sweep_xiao.dtsi`.
+- Socket orientation: pinky column and the outer thumb rot 0, the rest rot 180 — checked so no
+  face's pads hit an edge with the grown outline (see `sweep_outline.py`).
 - `boardgeom.prism()` always extrudes +Z; shapely rings can be clockwise and build123d's
   `extrude` follows the face normal — never call `extrude` on shapely-derived faces directly.
 - Fresh ergogen boards are unrouted: `make pcb` allows unconnected items, `make pcb-strict` doesn't.
@@ -88,5 +97,5 @@ Look at after changes:
 - Freerouting does not know KiCad's copper-to-edge clearance (0.5 mm); `specctra.py export` adds a
   temporary keep-out ring along Edge.Cuts to the DSN (0.9 mm — narrower rings were not fully
   respected). The GND pour uses solid pad connections (edge pads starve thermal spokes).
-- `make pcb-strict` must pass before fab.
+- `make pcb-strict` must pass before fab. Routed board lives in `pcb/sweep.kicad_pcb`.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.

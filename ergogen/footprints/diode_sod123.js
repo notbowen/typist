@@ -1,9 +1,15 @@
-// SOD-123 signal diode (1N4148W) on the back side, hand-solderable pads.
+// SOD-123 signal diode (1N4148W), hand-solderable pads.
+// reversible: identical pads on both faces (populate the bottom face of each half).
 // from = anode, to = cathode (bar), matching ZMK/QMK col2row with the switch
 // between column and anode.
 module.exports = {
-  params: { designator: 'D', side: 'B', from: undefined, to: undefined },
+  params: { designator: 'D', side: 'B', reversible: false, from: undefined, to: undefined },
   body: p => {
+    if (p.reversible) {
+      const b = module.exports.body({ ...p, reversible: false, side: 'B' })
+      const f = module.exports.body({ ...p, reversible: false, side: 'F', ref_hide: 'hide' })
+      return merge(b, f)
+    }
     const s = p.side
     const mirror = s == 'B' ? '(justify mirror)' : ''
     return `
@@ -27,4 +33,11 @@ module.exports = {
     )
     `
   }
+}
+
+// combine two single-sided bodies into one module: keep the first header, append
+// the second's pads/graphics (everything after its "at" line)
+function merge(a, b) {
+  const inner = b.slice(b.indexOf('\n', b.indexOf('(at ')) + 1, b.lastIndexOf(')'))
+  return a.slice(0, a.lastIndexOf(')')) + inner.replace(/\(fp_text reference[^\n]*\n/, '') + ')\n'
 }

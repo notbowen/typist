@@ -3,7 +3,9 @@
  *
  * PCB nets (ergogen/config.yaml):  C0..C4 = pinky..inner column  -> D0..D4
  *                                  R0..R3 = top/home/bottom/thumb -> D5, D8, D9, D10
- *   (D6/D7 are the XIAO's UART pins and stay unused)
+ * Status LEDs (active high, GPIO -> 1k -> LED -> GND), same pins on both halves:
+ *   LED1 = D6, LED2 = D7, LED3 = P0.09 (NFC1 pad), LED4 = P0.10 (NFC2 pad)
+ *   -> UART0 is disabled and the NFC pads are used as GPIO (see sweep_xiao.conf)
  *   thumbs: tucky (inner) on C3, reachy (outer) on C4.
  * Diodes: switch between column and anode, cathode on the row -> col2row.
  * The right half uses the same pins; its hardware columns are also numbered
@@ -48,3 +50,19 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4)    RC(2,9) RC(2,8) RC(2,7) RC(2,6) RC(2,
             ;
     };
 };
+
+/ {
+    status_leds: status_leds {
+        compatible = "gpio-leds";
+        status_led_1: status_led_1 { gpios = <&xiao_d 6 GPIO_ACTIVE_HIGH>; label = "LED1"; };
+        status_led_2: status_led_2 { gpios = <&xiao_d 7 GPIO_ACTIVE_HIGH>; label = "LED2"; };
+        status_led_3: status_led_3 { gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>; label = "LED3"; };
+        status_led_4: status_led_4 { gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>; label = "LED4"; };
+    };
+};
+
+/* D6/D7 drive LEDs instead of the UART */
+&uart0 {
+    status = "disabled";
+};
+

@@ -1,7 +1,7 @@
-# Sweep-style split keyboard: PCB + 3D-printed case toolchain.
-# `make help` for targets. SIDES selects halves (default: left right).
+# Sweep-style split keyboard: one reversible PCB for both halves.
+# `make help` for targets. SIDES selects boards (default: the single reversible `sweep`).
 
-SIDES ?= left right
+SIDES ?= sweep
 PY    := .venv/bin/python
 ERGO  := build/ergogen/pcbs
 
@@ -15,11 +15,11 @@ help:
 	@echo "make ergogen      regenerate layout, outlines, unrouted PCBs from ergogen/config.yaml"
 	@echo "make pcb          DRC (unrouted allowed) + 2D/3D plots + CAD geometry for each side"
 	@echo "make pcb-strict   same, but unrouted connections fail"
-	@echo "make route SIDE=left   Freerouting + GND pour -> build/pcb/<side>-routed.kicad_pcb"
+	@echo "make route SIDE=sweep  Freerouting + GND pour -> build/pcb/<side>-routed.kicad_pcb"
 	@echo "make fab          gerbers/drill zip, pos, STEP per side"
 	@echo "make case         build123d case + fit check + mesh checks + slice + renders"
-	@echo "make all          ergogen pcb case"
-	@echo "make verify       pcb-strict case (release gate)"
+	@echo "make all          ergogen pcb"
+	@echo "make verify       pcb-strict (release gate)"
 	@echo "make viewer       interactive 3D viewer + spec sheet -> build/artifact/sweep-xiao.html"
 	@echo "Boards: pcb/<side>.kicad_pcb if present, else $(ERGO)/<side>.kicad_pcb"
 
@@ -43,7 +43,7 @@ pcb-strict:
 	$(MAKE) pcb STRICT=--strict
 
 route:
-	@test -n "$(SIDE)" || { echo "usage: make route SIDE=left"; exit 2; }
+	@test -n "$(SIDE)" || { echo "usage: make route SIDE=sweep"; exit 2; }
 	mkdir -p build/pcb
 	# route GND as real tracks first, then pour: pours added before routing fragment
 	# into islands once Freerouting treats GND as a plane
@@ -60,9 +60,9 @@ case:
 	  [ -f build/pcb/$$s.geom.json ] || $(MAKE) pcb SIDES=$$s; \
 	  echo "== case $$s"; scripts/cad/check.sh build/pcb/$$s.geom.json build/cad/$$s || rc=1; done; exit $$rc
 
-all: ergogen pcb case
+all: ergogen pcb
 
-verify: pcb-strict case
+verify: pcb-strict
 
 viewer:
 	$(PY) scripts/artifact/build_viewer.py build/artifact/sweep-xiao.html

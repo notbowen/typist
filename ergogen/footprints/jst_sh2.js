@@ -1,9 +1,15 @@
 // JST SH 1.0 mm 2-pin, SMD side entry (SM02B-SRSS-TB), for the LiPo cell.
 // Body 6.0 x 4.25 x 2.95 mm. Cable enters from local -y. Pin 1 = BAT+, pin 2 = GND
 // (the common "Adafruit" polarity - cheap cells are often reversed: CHECK).
+// reversible: pads on both faces, pin 1 mirrored so the housing fits either face.
 module.exports = {
-  params: { designator: 'J', side: 'B', pos: undefined, neg: undefined },
+  params: { designator: 'J', side: 'B', reversible: false, pos: undefined, neg: undefined },
   body: p => {
+    if (p.reversible) {
+      const b = module.exports.body({ ...p, reversible: false, side: 'B' })
+      const f = module.exports.body({ ...p, reversible: false, side: 'F', ref_hide: 'hide' })
+      return merge(b, f)
+    }
     const s = p.side
     const mirror = s == 'B' ? '(justify mirror)' : ''
     const fx = s == 'B' ? -1 : 1       // keep pin 1 on the same physical side when flipped
@@ -31,4 +37,9 @@ module.exports = {
     )
     `
   }
+}
+
+function merge(a, b) {
+  const inner = b.slice(b.indexOf('\n', b.indexOf('(at ')) + 1, b.lastIndexOf(')'))
+  return a.slice(0, a.lastIndexOf(')')) + inner.replace(/\(fp_text reference[^\n]*\n/, '') + ')\n'
 }
