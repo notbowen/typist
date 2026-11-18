@@ -71,6 +71,8 @@ Look at after changes:
   `silk_over_copper` warnings come from ergogen's footprints and are harmless.
 - Ergogen regenerates boards from scratch (routing lost). Once routed/edited, the board belongs
   in `pcb/<side>.kicad_pcb` (committed); re-sync layout changes by hand or re-route.
+- Freerouting does not know KiCad's copper-to-edge clearance (0.5 mm) and can route tracks
+  ~0.3 mm from Edge.Cuts; the DRC after `make route` reports these as `copper_edge_clearance`.
 - The reference autoroute leaves a few connections unrouted — the layout around the MCU is tight.
   Fix in placement (config.yaml) or route manually; `make pcb-strict` must pass before fab.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.
