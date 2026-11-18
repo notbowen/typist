@@ -16,18 +16,20 @@ from shapely.ops import unary_union
 from boardgeom import Board, prism
 
 DIMS = {
-    # Kailh Choc v1 (PG1350), no plate
+    # Kailh Choc v1 Sunset (LowproKB x Kailh, tactile 40 gf, 2.95 mm travel), no plate.
+    # Same Choc v1 body as every PG1350, so these envelopes are unchanged.
     "choc_housing": (13.8, 13.8, 2.2),      # w, d, h of the bottom housing above PCB
     "choc_flange": (15.0, 15.0, 0.8),       # flange on top of the bottom housing
     "choc_top": (13.8, 13.8, 2.0),          # top housing
     "choc_pin_below": 1.4,                  # posts/pins protruding below PCB bottom
-    "keycap": (17.5, 16.5),                 # choc keycap footprint (MBK / LDSA-style)
-    "keycap_bottomout_z": 3.0,              # keycap underside above PCB top when pressed
+    "keycap": (17.5, 16.5),                 # blank MBK Choc keycap footprint (choc spacing 18 x 17)
+    "keycap_bottomout_z": 3.0,              # keycap underside above PCB top when pressed (Sunset
+                                            # bottoms out after 2.95 mm, so 3.0 is conservative)
     "keycap_top_z": 11.0,                   # keycap top above PCB top at rest
-    "hotswap_h": 1.85,                      # Kailh choc hotswap socket height (below PCB)
+    "hotswap_h": 1.85,                      # Kailh Choc hotswap socket (CPG135001S30) height below PCB
     "hotswap_margin": 0.6,                  # socket body beyond its pads
     "pth_pin_below": 1.8,                   # trimmed through-hole leads / solder fillets
-    "sod123_h": 1.35,                       # 1N4148W body height (below PCB)
+    "sod123_h": 1.35,                       # 1N4148W SOD-123 body height (below PCB)
     # Seeed XIAO nRF52840, SMD-mounted flat on the top side, USB-C toward local +y (CAD)
     "xiao": (17.8, 20.95, 1.0),             # w, l, PCB thickness (incl. solder)
     "xiao_parts_h": 1.7,                    # shield can / passives above the XIAO PCB

@@ -83,7 +83,7 @@
 <body>
 <header>
   <h1>Sweep XIAO</h1>
-  <span class="sub">Ferris-Sweep-shaped 34-key wireless split · Seeed XIAO nRF52840 · plug-in LiPo per half · Choc v1 hotswap</span>
+  <span class="sub">Ferris-Sweep-shaped 34-key wireless split · Seeed XIAO nRF52840 · plug-in LiPo per half · Kailh Choc Sunset + white MBK, hotswap</span>
   <div class="chips" id="chips"></div>
 </header>
 <main>
@@ -163,6 +163,7 @@ files and land within 0.02 mm of them. The Pro Micro and TRRS jack are gone. Eac
 <tr><td>Link between halves</td><td>TRRS cable</td><td>Bluetooth LE (ZMK split), no cable</td></tr>
 <tr><td>Power</td><td>USB, or a LiPo soldered to pads</td><td>LiPo on a JST-SH plug in a bay in the case, slide switch, charges over the XIAO's USB-C</td></tr>
 <tr><td>Switch sockets</td><td>Mill-Max or soldered</td><td>Kailh Choc v1 hotswap sockets, oriented like the Sweep Bling LP</td></tr>
+<tr><td>Switches / caps</td><td>any Choc v1</td><td>Kailh Choc Sunset (tactile, 40 gf) with blank white MBK caps</td></tr>
 <tr><td>Outline</td><td>Sweep 2.2</td><td>Sweep 2.2, but the controller tab is 1.8 mm wider so the XIAO's pads keep 0.5 mm from the board edge</td></tr>
 <tr><td>Case</td><td>none / third-party</td><td>3D-printed tray; PCB held by 3 M2 screws at the Sweep Bling LP hole positions</td></tr>
 </table>
@@ -190,8 +191,8 @@ document.getElementById('compat').innerHTML = `
 <tr><td>LiPo ↔ XIAO charger</td><td>The XIAO's BQ25101 charges single-cell 3.7 V LiPo at 50 mA by default (100 mA optional). On a 110 mAh 301230 that is about 0.45 C, inside the usual ≤1 C limit. Use a cell with a protection circuit (PCM).</td><td>${badge(true)}</td></tr>
 <tr><td>LiPo ↔ connector</td><td>JST SH 1.0 mm, 2-pin. Silkscreen marks + and − next to the socket. Cell polarity is not standardised: cheap cells are often wired backwards, so check with a meter before plugging in.</td><td>${badge('warn','verify cell')}</td></tr>
 <tr><td>Power switch ↔ charging</td><td>The switch sits between the cell and BAT+, so the cell only charges while the switch is ON. Turn it on to charge over USB-C.</td><td>${badge('warn','by design')}</td></tr>
-<tr><td>Switches ↔ sockets</td><td>Kailh Choc v1 (PG1350) with Kailh Choc hotswap sockets (CPG135001S30). Choc v2 and MX switches will not fit.</td><td>${badge(true)}</td></tr>
-<tr><td>Keycaps ↔ spacing</td><td>18 × 17 mm Choc spacing. You need Choc-spaced caps no larger than 17.5 × 16.5 mm (MBK, LDSA Choc, CFX). MX-spaced Choc caps will rub against each other.</td><td>${badge('warn','choc-spaced caps')}</td></tr>
+<tr><td>Switches ↔ sockets</td><td>Kailh Choc Sunset switches are Choc v1 (same body and pins as PG1350), so they fit the SplitKB Kailh Choc hotswap sockets (CPG135001S30) and the 3.43 mm centre-post and 1.7 mm side-post holes. The design's 3.0 mm keycap travel allowance covers the Sunset's 2.95 mm total travel.</td><td>${badge(true)}</td></tr>
+<tr><td>Keycaps ↔ spacing</td><td>Blank MBK caps are 17.5 × 16.5 mm on 18 × 17 mm Choc spacing, which leaves 0.5 mm between neighbouring caps. Every key is 1u, so all 34 caps are the same, and blank caps fit the rotated thumb keys too. The case is checked against the full keycap travel volume.</td><td>${badge(true)}</td></tr>
 <tr><td>XIAO ↔ inner keycaps</td><td>0.45 mm gap between the XIAO body and the inner-column keycaps (that's why the tab was widened 1.8 mm)</td><td>${badge(true)}</td></tr>
 <tr><td>USB-C cable ↔ case</td><td>Opening is ${D.dims.usb_plug[0]} × ${D.dims.usb_plug[1]} mm, starting at the XIAO receptacle, so it fits typical USB-C plugs with overmoulds up to 12.5 mm wide</td><td>${badge(true)}</td></tr>
 <tr><td>LiPo ↔ battery bay</td><td>The bay takes a cell up to ${D.dims.cell[0]} × ${D.dims.cell[1]} × ${D.dims.cell[2]} mm. It's checked against the hotswap sockets, diodes, the connector and the room the mated plug needs.</td><td>${badge(L.checks.battery_vs_parts?.ok && R.checks.battery_vs_parts?.ok)}</td></tr>
@@ -236,7 +237,7 @@ document.getElementById('mech').innerHTML = `
   <rect x="70" y="${135-p.under_gap*8+0}" width="40" height="${D.dims.hotswap_h*8}" fill="#d9d4c7"/><text x="62" y="${135-p.under_gap*8+D.dims.hotswap_h*8+12}">socket ${D.dims.hotswap_h}</text>
   <rect x="42" y="${135-p.under_gap*8-12.8}" width="336" height="12.8" fill="#2f6b3a"/><text x="44" y="${135-p.under_gap*8-16}">PCB 1.6</text>
   <rect x="215" y="${135-p.under_gap*8-12.8-8}" width="142" height="8" fill="#2b4c8c"/><rect x="250" y="${135-p.under_gap*8-12.8-8-26}" width="70" height="26" fill="#2b4c8c"/><text x="325" y="${135-p.under_gap*8-12.8-26}">XIAO + USB-C</text>
-  <rect x="60" y="${135-p.under_gap*8-12.8-40}" width="110" height="40" fill="#3a3a3a"/><text x="80" y="${135-p.under_gap*8-12.8-44}">Choc v1</text>
+  <rect x="60" y="${135-p.under_gap*8-12.8-40}" width="110" height="40" fill="#3a3a3a"/><text x="80" y="${135-p.under_gap*8-12.8-44}">Choc Sunset + MBK</text>
   <text x="10" y="12">all values mm · gap under PCB ${p.under_gap}</text>
 </svg>
 <h2>Case parameters</h2>
@@ -265,18 +266,19 @@ document.getElementById('bom').innerHTML = `
 <h2>Bill of materials (whole keyboard)</h2>
 <table>
 <tr><th>Qty</th><th>Part</th><th>Notes</th></tr>
-<tr><td class="num">2</td><td>PCB (left + right)</td><td>JLCPCB, see below</td></tr>
-<tr><td class="num">2</td><td>Seeed Studio XIAO nRF52840</td><td>(or the Sense / Plus) without headers</td></tr>
-<tr><td class="num">34</td><td>Kailh Choc v1 switches (PG1350)</td><td>any v1 variant</td></tr>
-<tr><td class="num">34</td><td>Kailh Choc v1 hotswap sockets</td><td>CPG135001S30</td></tr>
-<tr><td class="num">34</td><td>Choc-spaced keycaps</td><td>MBK / LDSA / CFX, 1u</td></tr>
-<tr><td class="num">34</td><td>1N4148W diode, SOD-123</td><td>LCSC C81598</td></tr>
-<tr><td class="num">2</td><td>MSK12C02 side slide switch, SMD</td><td>same part as the Sweep 2 (C128955-style footprint)</td></tr>
-<tr><td class="num">2</td><td>JST SH 2-pin SMD side-entry, SM02B-SRSS-TB</td><td>LCSC C160402. Check the stock and footprint before ordering</td></tr>
-<tr><td class="num">2</td><td>LiPo 3.7 V 301230 (≈110 mAh) with PCM, JST SH 1.0 plug</td><td>max 12.5 × 31 × 3.1 mm. Check polarity</td></tr>
+<tr><td class="num">2</td><td>PCB (left + right)</td><td><b>order:</b> JLCPCB, see below</td></tr>
+<tr><td class="num">2</td><td>Seeed Studio XIAO nRF52840</td><td><b>have.</b> Soldered flat, no headers or sockets.</td></tr>
+<tr><td class="num">34</td><td>Kailh Choc Sunset switches (Choc v1, tactile 40 gf)</td><td><b>have:</b> 40 from SplitKB (6 spare)</td></tr>
+<tr><td class="num">34</td><td>Kailh Choc hotswap sockets, black</td><td><b>have:</b> SplitKB pack. Make sure it holds at least 34.</td></tr>
+<tr><td class="num">34</td><td>Blank MBK Choc keycaps, 1u, white</td><td><b>have:</b> 40 from SplitKB (6 spare)</td></tr>
+<tr><td class="num">34</td><td>1N4148W diode, SOD-123</td><td><b>have:</b> 100 SMD diodes from SplitKB. Check the reel says SOD-123.</td></tr>
+<tr><td class="num">2</td><td>MSK12C02 side slide switch, SMD</td><td><b>have:</b> from the Wireless Controller Expansion Bundle</td></tr>
+<tr><td class="num">2</td><td>JST SH 2-pin SMD side-entry, SM02B-SRSS-TB</td><td><b>buy:</b> LCSC C160402. Check the stock and footprint before ordering. The JST PH jacks in your bundle are too tall to fit under the PCB.</td></tr>
+<tr><td class="num">2</td><td>LiPo 3.7 V 301230 (≈110 mAh) with PCM, JST SH 1.0 plug</td><td><b>buy:</b> max 12.5 × 31 × 3.1 mm. Check polarity</td></tr>
 <tr><td class="num">6</td><td>M2 × 6 pan or wafer head screw, self-tapping for plastic</td><td>or M2 × 5 machine screws with M2 heat-set inserts (set <code>pilot_d</code> to 3.2)</td></tr>
 <tr><td class="num">8</td><td>Rubber bumpons</td><td>optional</td></tr>
 </table>
+<p class="muted">Not used in this build: the Mill-Max low-profile sockets (the XIAO is soldered flat) and the JST PH jacks, plugs and crimps from the expansion bundle. Keep them for another board.</p>
 <h2>JLCPCB order settings</h2>
 <div class="kv">
 <div>Files</div><div><code>make fab</code> → <code>build/fab/&lt;side&gt;-gerbers.zip</code> (one order per half)</div>
@@ -324,7 +326,7 @@ const b2ab = s => { const bin = atob(s); const u = new Uint8Array(bin.length); f
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.0, ...o });
 
 const caseMat = mat('#b9b1a3', { roughness: 0.9 });
-const capMat = mat('#efece4', { roughness: 0.6 });
+const capMat = mat('#f6f5f1', { roughness: 0.55 });
 const groups = { case: [], pcb: [], sockets: [], switches: [], keycaps: [], mcu: [], parts: [], battery: [], keepouts: [] };
 const LAYERS = [['case', 'Case', true], ['keycaps', 'Keycaps', true], ['switches', 'Switches', true], ['pcb', 'PCB', true],
   ['mcu', 'XIAO', true], ['battery', 'LiPo', true], ['sockets', 'Sockets', true], ['keepouts', 'Keep-outs', false]];
@@ -377,7 +379,8 @@ function roundedRect(w, h, r) {
 }
 const capGeo = new THREE.ExtrudeGeometry(roundedRect(16.3, 15.3, 1.6), { depth: 2.2, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 3, curveSegments: 6 });
 const housingGeo = new THREE.BoxGeometry(13.8, 13.8, 2.2), flangeGeo = new THREE.BoxGeometry(15, 15, 0.8), topGeo = new THREE.BoxGeometry(13.8, 13.8, 2.0), stemGeo = new THREE.BoxGeometry(5.4, 3.0, 1.4);
-const housingMat = mat('#2a2a2c'), topMat = mat('#3a3a3d'), stemMat = mat('#9a5b2e');
+// Kailh Choc Sunset: black bottom housing, translucent orange top, orange stem
+const housingMat = mat('#1f1f21'), topMat = mat('#f08a3c', { transparent: true, opacity: 0.78, roughness: 0.3 }), stemMat = mat('#e8661f');
 
 const halves = {};
 function buildSide(name, side, dx) {
@@ -401,7 +404,7 @@ function buildSide(name, side, dx) {
   for (const [x, y, r] of side.keys) {
     const k = new THREE.Group(); k.position.set(x, y, zt); k.rotation.z = THREE.MathUtils.degToRad(r);
     const a = new THREE.Mesh(housingGeo, housingMat); a.position.z = 1.1; k.add(a);
-    const b = new THREE.Mesh(flangeGeo, housingMat); b.position.z = 2.6; k.add(b);
+    const b = new THREE.Mesh(flangeGeo, topMat); b.position.z = 2.6; k.add(b);
     const c = new THREE.Mesh(topGeo, topMat); c.position.z = 4.0; k.add(c);
     const s = new THREE.Mesh(stemGeo, stemMat); s.position.z = 5.6; k.add(s);
     sw.add(k);
@@ -433,7 +436,7 @@ function swatches(id, list, target) {
     b.onclick = () => { target.color.set(c); host.querySelectorAll('.swatch').forEach(x => x.classList.toggle('on', x === b)); }; host.appendChild(b); });
 }
 swatches('caseSw', ['#b9b1a3', '#2e2f33', '#f1efe9', '#8fa38b', '#b7c7dc'], caseMat);
-swatches('capSw', ['#efece4', '#2b2b2e', '#c9c3b6', '#d98f4e', '#9fb7c9'], capMat);
+swatches('capSw', ['#f6f5f1', '#2b2b2e', '#c9c3b6', '#d98f4e', '#9fb7c9'], capMat);
 
 // framing / views
 let bounds = new THREE.Box3();

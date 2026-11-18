@@ -2,7 +2,8 @@
 
 Design and verify the PCBs and printed case for a wireless Ferris-Sweep-style
 34-key split: Sweep 2.2 key positions + outline (open source, Solderpad 2.1),
-Choc v1 hotswap, Seeed XIAO nRF52840 per half (SMD, flat), 4x5 diode matrix,
+Choc v1 hotswap (Kailh Choc Sunset switches, blank white MBK caps — the parts the owner bought
+from SplitKB), Seeed XIAO nRF52840 per half (SMD, flat), 4x5 diode matrix,
 plug-in LiPo (JST-SH) under the controller tab, side power switch, ZMK BLE split
 (no TRRS). Everything runs headless; every design change should be verified with
 the commands below and by **looking at the rendered PNGs** (Read them).

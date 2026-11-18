@@ -4,7 +4,7 @@ PCB + 3D-printed case for a wireless 34-key split that keeps the Ferris Sweep 2
 shape (key positions and outline from the open-source
 [Sweep](https://github.com/davidphilipbarr/Sweep), Solderpad Hardware License 2.1),
 with a Seeed XIAO nRF52840 per half, a plug-in LiPo cell under the controller,
-Choc v1 hotswap sockets and ZMK firmware — plus a headless design-and-verify toolchain.
+Choc v1 hotswap sockets (Kailh Choc Sunset switches, blank white MBK caps) and ZMK firmware — plus a headless design-and-verify toolchain.
 
 ```sh
 make setup   # toolchain: Python venv, ergogen, KiCad 9 + JRE docker images, Freerouting
