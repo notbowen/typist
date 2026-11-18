@@ -1,0 +1,5 @@
+description: Show battery or connection status on the Sweep XIAO status LEDs
+
+compatible: "sweep,behavior-status-ind"
+
+include: one_param.yaml

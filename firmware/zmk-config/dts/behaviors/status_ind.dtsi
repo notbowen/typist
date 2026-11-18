@@ -1,0 +1,12 @@
+/* &status_ind IND_BAT | IND_CON  (sweep-status-leds module) */
+#include <dt-bindings/sweep/status_leds.h>
+
+/ {
+    behaviors {
+        /omit-if-no-ref/ status_ind: status_ind {
+            compatible = "sweep,behavior-status-ind";
+            #binding-cells = <1>;
+            display-name = "Status LEDs";
+        };
+    };
+};

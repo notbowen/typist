@@ -1,0 +1,18 @@
+.... at 101 ms
+layer 1 state 1 locked 0
+1... at 301 ms
+layer 3 state 1 locked 0
+..3. at 602 ms
+layer 3 state 0 locked 0
+1... at 903 ms
+layer 1 state 0 locked 0
+.... at 1204 ms
+layer 2 state 1 locked 0
+.2.. at 1505 ms
+layer 2 state 0 locked 0
+.... at 1806 ms
+layer 4 state 1 locked 0
+...4 at 2107 ms
+layer 4 state 0 locked 0
+.... at 2408 ms
+&status_ind IND_BAT

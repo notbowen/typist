@@ -99,3 +99,15 @@ Look at after changes:
   respected). The GND pour uses solid pad connections (edge pads starve thermal spokes).
 - `make pcb-strict` must pass before fab. Routed board lives in `pcb/sweep.kicad_pcb`.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.
+
+## Firmware (ZMK)
+
+- `make firmware` (`scripts/firmware/build.sh`): headless ZMK build like ZMK's GitHub workflow, in
+  `zmkfirmware/zmk-build-arm:stable`; west workspace `build/zmk/ws`, outputs
+  `build/firmware/<shield>-xiao_ble__zmk.{uf2,log}`. `make firmware-test` (`scripts/firmware/test.sh`):
+  host unit test of `src/status_logic.h` + ZMK native_sim tests in `firmware/zmk-config/tests/`.
+- ZMK pinned in `firmware/zmk-config/config/west.yml` (main, Zephyr 4.1): board `xiao_ble//zmk`,
+  NFC pads as GPIO via `&uicr { nfct-pins-as-gpios; }` (the Kconfig option is deprecated).
+- `firmware/zmk-config` is also a Zephyr module (`zephyr/module.yml`): status-LED code in `src/`,
+  options `CONFIG_SWEEP_STATUS_LEDS_*` in `Kconfig`, `&status_ind IND_BAT|IND_CON` behavior.
+  Enabled when the DT has the `status_leds` node label (so `settings_reset` is unaffected).

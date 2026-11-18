@@ -1,0 +1,59 @@
+# Status LEDs of the Sweep XIAO shield (gpio-leds node `status_leds`, 4 LEDs).
+
+config SWEEP_STATUS_LEDS
+    bool "Sweep XIAO status LEDs (battery, BLE profile, link, layer)"
+    default $(dt_nodelabel_enabled,status_leds)
+    depends on LED
+    help
+      Drives the 4 status LEDs: battery on boot / on demand, BLE profile and
+      connection state (central), split link state (peripheral), active layer.
+
+if SWEEP_STATUS_LEDS
+
+config SWEEP_STATUS_LEDS_BOOT_BATTERY
+    bool "Show battery level on boot"
+    default y
+
+config SWEEP_STATUS_LEDS_BATTERY_MS
+    int "How long the battery level is shown (ms)"
+    default 2000
+
+config SWEEP_STATUS_LEDS_BATTERY_LOW
+    int "Battery percentage at or below which LED1 blinks as a warning"
+    default 10
+
+config SWEEP_STATUS_LEDS_LOW_WARN_INTERVAL_S
+    int "Minimum seconds between two low-battery warnings"
+    default 300
+
+config SWEEP_STATUS_LEDS_CONN_TIMEOUT_S
+    int "Keep showing 'advertising / searching' for this long after a change (s)"
+    default 30
+    help
+      While the host (left) or the left half (right) is not connected, the LEDs
+      blink periodically for this long after boot, a profile change or an
+      &status_ind IND_CON press, then go dark to save power.
+
+config SWEEP_STATUS_LEDS_CONFIRM_MS
+    int "Length of the 'connected' confirmation (ms)"
+    default 1000
+
+config SWEEP_STATUS_LEDS_LAYER
+    bool "Light the LED of the highest active layer (1-4) while it is active"
+    default y
+    depends on !ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL
+
+config SWEEP_BEHAVIOR_STATUS_IND
+    bool
+    default y
+    depends on DT_HAS_SWEEP_BEHAVIOR_STATUS_IND_ENABLED
+
+config SWEEP_STATUS_LEDS_STACK_SIZE
+    int "Status LED thread stack size"
+    default 1024
+
+config SWEEP_STATUS_LEDS_PRIORITY
+    int "Status LED thread priority"
+    default 10
+
+endif

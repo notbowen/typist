@@ -3,7 +3,7 @@ id: sweep_xiao
 name: Sweep XIAO
 type: shield
 url: https://github.com/davidphilipbarr/Sweep
-requires: [seeeduino_xiao_ble]
+requires: [seeed_xiao]
 features:
   - keys
 siblings:

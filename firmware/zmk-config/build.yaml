@@ -1,10 +1,11 @@
-# ZMK build matrix. Board name: `seeeduino_xiao_ble` on ZMK releases based on
-# Zephyr 3.5; ZMK main after the Zephyr 4.1 upgrade calls it `xiao_ble//zmk`.
+# ZMK build matrix. ZMK is pinned in config/west.yml to a main commit on Zephyr 4.1,
+# where the XIAO nRF52840 is `xiao_ble//zmk` (ZMK v0.3 / Zephyr 3.5 called it
+# `seeeduino_xiao_ble`; the shield needs Zephyr >= 3.7 for `&uicr nfct-pins-as-gpios`).
 ---
 include:
-  - board: seeeduino_xiao_ble
+  - board: xiao_ble//zmk
     shield: sweep_xiao_left
-  - board: seeeduino_xiao_ble
+  - board: xiao_ble//zmk
     shield: sweep_xiao_right
-  - board: seeeduino_xiao_ble
+  - board: xiao_ble//zmk
     shield: settings_reset

@@ -64,3 +64,11 @@ viewer:
 
 clean:
 	rm -rf build
+
+# ZMK firmware (docker, ~2 min after the first west update): build/firmware/*.uf2
+.PHONY: firmware firmware-test
+firmware:
+	scripts/firmware/build.sh
+
+firmware-test:
+	scripts/firmware/test.sh
