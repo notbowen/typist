@@ -10,6 +10,8 @@ JSON fields:
   footprints          [{ref, name, x, y, rot, side, bbox:[xmin,ymin,xmax,ymax]}]
   pads                [{ref, pad, net, x, y, layers, type, poly:[[x,y],...]}]
   npth                [{ref, x, y, d}]   non-plated holes (switch centre posts etc.)
+  tracks              [[x1, y1, x2, y2, width, layer]]  copper tracks (for previews)
+  vias                [[x, y, size, drill]]
 """
 import json, sys
 import pcbnew
@@ -61,9 +63,17 @@ for f in b.GetFootprints():
             "poly": chain(poly.Outline(0)) if poly.OutlineCount() else [],
         })
 
+tracks, vias = [], []
+for t in b.GetTracks():
+    if t.Type() == pcbnew.PCB_VIA_T:
+        vias.append(pt(t.GetPosition()) + [round(mm(t.GetWidth(pcbnew.F_Cu)), 3), round(mm(t.GetDrillValue()), 3)])
+    elif t.Type() == pcbnew.PCB_TRACE_T:
+        tracks.append(pt(t.GetStart()) + pt(t.GetEnd()) + [round(mm(t.GetWidth()), 3), b.GetLayerName(t.GetLayer())])
+
 json.dump({
     "source": src,
     "thickness": round(mm(b.GetDesignSettings().GetBoardThickness()), 3),
     "outline": outline, "footprints": fps, "pads": pads, "npth": npth,
+    "tracks": tracks, "vias": vias,
 }, open(dst, "w"), indent=1)
 print(f"{dst}: {len(outline)} outline loops, {len(fps)} footprints, {len(pads)} pads, {len(npth)} npth")

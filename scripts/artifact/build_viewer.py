@@ -50,7 +50,7 @@ def side_data(side: str) -> dict:
     drc_err = [v for v in drc.get("violations", []) if v.get("severity") == "error"]
     return {
         "outline": g["outline"][0], "thickness": g["thickness"], "keys": keys, "pads": pads,
-        "holes": holes, "fps": fps,
+        "holes": holes, "fps": fps, "tracks": g.get("tracks", []), "vias": g.get("vias", []),
         "pcb_bottom_z": fit["case"]["pcb_bottom_z"], "case_size": fit["case"]["size_mm"],
         "case_volume": fit["case"]["volume_mm3"],
         "checks": {k: v for k, v in fit["checks"].items()},
