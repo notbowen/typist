@@ -31,9 +31,14 @@ units:
   jst_x: 92.544       # battery jack (bottom face), cable entry facing the cell
   jst_y: -5.118
   jst_rot: 0
-  led_x: 83.344       # first status LED, under the XIAO; LEDs run left to right
-  led_y: 8.382
-  led_pitch: 3.6
+  # status LEDs: a row in the open area below the middle column, between the ring
+  # and index bottom keys and left of the thumbs, tilted to follow the bottom edge
+  # (edge slope there -6.2..-8.7 deg) and kept ~5 mm clear of it
+  led_x: 38.144       # row centre (between LED2 and LED3)
+  led_y: -2.718
+  led_rot: -8
+  led_dx: 3.5650      # 3.6 mm pitch along the row: 3.6 cos 8, -3.6 sin 8
+  led_dy: -0.5010
 
 points:
   zones:
@@ -322,7 +327,8 @@ pcbs:
         what: led_0805
         where: matrix_pinky_bottom
         adjust:
-          shift: [led_x + 0 * led_pitch, led_y]
+          shift: [led_x - 1.5 * led_dx, led_y - 1.5 * led_dy]
+          rotate: led_rot
         params:
           gpio: LED1
           mid: LED1_A
@@ -331,7 +337,8 @@ pcbs:
         what: led_0805
         where: matrix_pinky_bottom
         adjust:
-          shift: [led_x + 1 * led_pitch, led_y]
+          shift: [led_x - 0.5 * led_dx, led_y - 0.5 * led_dy]
+          rotate: led_rot
         params:
           gpio: LED2
           mid: LED2_A
@@ -340,7 +347,8 @@ pcbs:
         what: led_0805
         where: matrix_pinky_bottom
         adjust:
-          shift: [led_x + 2 * led_pitch, led_y]
+          shift: [led_x + 0.5 * led_dx, led_y + 0.5 * led_dy]
+          rotate: led_rot
         params:
           gpio: LED3
           mid: LED3_A
@@ -349,7 +357,8 @@ pcbs:
         what: led_0805
         where: matrix_pinky_bottom
         adjust:
-          shift: [led_x + 3 * led_pitch, led_y]
+          shift: [led_x + 1.5 * led_dx, led_y + 1.5 * led_dy]
+          rotate: led_rot
         params:
           gpio: LED4
           mid: LED4_A

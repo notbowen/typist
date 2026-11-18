@@ -288,7 +288,7 @@ ${pinRows.map(r => `<tr><td><code>${r[0]}</code></td><td class="num">${r[1]}</td
 </table>
 <p>Diode direction is <b>col2row</b>: column → switch → 1N4148W anode → cathode (bar) → row. The columns are numbered pinky → inner on both halves (the right half is the same board), so the firmware's transform mirrors them.</p>
 <h2>Status LEDs</h2>
-<p>Four 0805 LEDs, each with a 0805 1 kΩ series resistor, in a row under the XIAO. Active high: <code>GPIO → 1 kΩ → LED anode → cathode → GND</code>, ≈1.2 mA each. Seen from above, the right half shows them in reverse order (LED4 on the left), because it's the same board flipped.</p>
+<p>Four 0805 LEDs, each with a 0805 1 kΩ series resistor, in a row in the open area at the bottom edge, between the bottom-row keys and the thumbs, tilted to follow the edge. Active high: <code>GPIO → 1 kΩ → LED anode → cathode → GND</code>, ≈1.2 mA each. Seen from above, the right half shows them in reverse order (LED4 on the left), because it's the same board flipped.</p>
 <table><tr><th>LED</th><th>Pin</th><th>Suggested colour</th></tr>
 ${LEDS.map(l => `<tr><td>${l.name}</td><td><code>${l.pin}</code></td><td><span style="color:${l.col}">●</span> ${l.label}</td></tr>`).join('')}</table>
 <h2>Power path</h2>
@@ -322,7 +322,7 @@ document.getElementById('build').innerHTML = `
 <li><b>JST-SH jack</b> (socket face). Mouth toward the controller tab (where the cell goes). Solder the 2 mounting tabs, then the 2 pins.</li>
 <li><b>Kapton strip</b> (top face) over the 4 <b>unused</b> BAT/NFC holes under the XIAO (Compatibility → XIAO). The amber patches in the 3D view show where; hide the XIAO layer to see them.</li>
 <li><b>XIAO</b> (top face, components up, USB-C at the tab's top edge). Tin one corner pad, align, tack, then solder all 14 castellated pads. Turn the board over and <b>fill the 4 used holes</b> (BAT−, BAT+, NFC1, NFC2) from the socket face so the solder wets the XIAO's underside pads. Check for continuity.</li>
-<li><b>4 resistors + 4 LEDs</b> (top face, row under the XIAO). Resistors on the row nearer the XIAO; LED cathode (green mark / bar on the part) to the silk bar.</li>
+<li><b>4 resistors + 4 LEDs</b> (top face, tilted row at the bottom edge left of the thumbs). Resistors on the row away from the edge; LED cathode (green mark / bar on the part) to the silk bar.</li>
 <li><b>Power switch</b> (top face), lever over the tab's outer edge.</li>
 <li><b>Flash and test on USB</b> (no battery yet). Short each key's socket contacts with tweezers, and check that the LEDs light.</li>
 <li><b>Hotswap sockets</b> (socket face, 17×). Push each socket flat, then solder both tabs.</li>
