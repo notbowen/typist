@@ -21,7 +21,8 @@ for f in "$A"/*.stl; do
     solid-pcb.stl) c="#2f6b3a" ;;
     solid-switches.stl) c="#e8e8e8" ;;
     solid-mcu_*) c="#3060a0" ;;
-    solid-trrs_*) c="#202020" ;;
+    solid-battery.stl) c="#c0c4cc" ;;
+    solid-jst_*|solid-pwr_*) c="#202020" ;;
     solid-under_pcb.stl) c="#d0a030" ;;
     keepout-keycap_travel.stl) continue ;;   # hides everything; render separately if needed
     keepout-*) c="#ff4040:0.4" ;;

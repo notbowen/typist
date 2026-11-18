@@ -1,8 +1,10 @@
 # Sweep-style split keyboard — PCB + 3D-printed case
 
-Design and verify the PCBs and printed case for a Ferris-Sweep-style 34-key
-split (5x3 + 2 thumbs per half, Choc spacing, direct-pin, Pro Micro footprint,
-TRRS). Everything runs headless; every design change should be verified with
+Design and verify the PCBs and printed case for a wireless Ferris-Sweep-style
+34-key split: Sweep 2.2 key positions + outline (open source, Solderpad 2.1),
+Choc v1 hotswap, Seeed XIAO nRF52840 per half (SMD, flat), 4x5 diode matrix,
+plug-in LiPo (JST-SH) under the controller tab, side power switch, ZMK BLE split
+(no TRRS). Everything runs headless; every design change should be verified with
 the commands below and by **looking at the rendered PNGs** (Read them).
 
 ## Pipeline
@@ -27,11 +29,12 @@ cad/ (build123d) case from the real PCB outline ──► build/cad/<side>/case.
 | `make all` | ergogen → PCB checks → case build/verify for both halves (~2.5 min) |
 | `make ergogen` | regenerate layout; outlines in `build/ergogen/outlines/`, points in `build/ergogen/points/` |
 | `make pcb` / `make pcb-strict` | DRC gate (+ unrouted fails with strict), 2D/3D plots, geometry export |
-| `make route SIDE=left` | GND pour + Freerouting (~2 min) → `build/pcb/left-routed.kicad_pcb` |
+| `make route SIDE=left` | Freerouting, then GND pour (~5 min) → `build/pcb/left-routed.kicad_pcb` |
 | `make fab` | gerbers+drill zip, pos csv, board STEP → `build/fab/` |
 | `make case` | case build + fit check + mesh checks + slice + renders |
 | `make verify` | release gate: `pcb-strict` + `case` |
 | `SIDES=left make case` | limit to one half |
+| `make viewer` | interactive HTML viewer + spec sheet → `build/artifact/sweep-xiao.html` (needs `make pcb case` outputs) |
 
 Look at after changes:
 - `build/pcb/<side>-2d.png` — outline, pads, tracks, silk (fastest PCB sanity view)
@@ -61,18 +64,28 @@ Look at after changes:
 
 - CAD frame: mm, x right, **y up** (KiCad y is flipped by `export_geometry.py`),
   z = 0 at PCB bottom. `case.stl` is exported in print orientation (bottom on z=0).
-- `cad/components.py` holds part envelopes (`DIMS`) — Choc v1 + hotswap sockets, Pro Micro on
-  sockets, PJ-320A — and keep-outs (keycap travel, USB plug, TRRS plug). Case openings are cut
+- `cad/components.py` holds part envelopes (`DIMS`) — Choc v1 + hotswap sockets, SOD-123 diodes,
+  XIAO nRF52840 + USB-C, MSK12C02 switch, JST-SH socket, 301230 LiPo — and keep-outs (keycap
+  travel, USB-C plug, switch finger notch, mated battery plug). Case openings are cut
   from the same keep-outs, so fit check and case can't disagree. Update `DIMS` for real parts.
-- `cad/case.py` `CaseParams`: wall, clearance, floor, under-PCB gap, ledge, wall height.
+- `cad/case.py` `CaseParams`: wall, clearance, floor, under-PCB gap (3.5: LiPo 3.1 thick), ledge,
+  wall height, M2 screw bosses (at the mounting holes), battery locating fence.
+- Outline: `scripts/ergogen/sweep_outline.py` converts the Sweep 2.2 Edge.Cuts into the ergogen
+  polygon in `config.yaml` (controller tab widened 1.8 mm for the XIAO). Socket orientation per
+  column follows the Sweep Bling LP (sockets face away from board edges).
+- Custom footprints live in `ergogen/footprints/` (XIAO, SOD-123, JST-SH, mounting hole).
+- The XIAO is not mirrored on the right half (it's a top-mounted module), so its BAT pads, the
+  battery cell (always on the XIAO's +x side) and the right JST (`jst_x_r`) are placed explicitly.
+- Matrix pins: cols D0-D4, rows D5/D8/D9/D10 (D6/D7 = UART left free). Must match
+  `firmware/zmk-config/config/boards/shields/sweep_xiao/sweep_xiao.dtsi`.
 - `boardgeom.prism()` always extrudes +Z; shapely rings can be clockwise and build123d's
   `extrude` follows the face normal — never call `extrude` on shapely-derived faces directly.
 - Fresh ergogen boards are unrouted: `make pcb` allows unconnected items, `make pcb-strict` doesn't.
   `silk_over_copper` warnings come from ergogen's footprints and are harmless.
 - Ergogen regenerates boards from scratch (routing lost). Once routed/edited, the board belongs
   in `pcb/<side>.kicad_pcb` (committed); re-sync layout changes by hand or re-route.
-- Freerouting does not know KiCad's copper-to-edge clearance (0.5 mm) and can route tracks
-  ~0.3 mm from Edge.Cuts; the DRC after `make route` reports these as `copper_edge_clearance`.
-- The reference autoroute leaves a few connections unrouted — the layout around the MCU is tight.
-  Fix in placement (config.yaml) or route manually; `make pcb-strict` must pass before fab.
+- Freerouting does not know KiCad's copper-to-edge clearance (0.5 mm); `specctra.py export` adds a
+  temporary keep-out ring along Edge.Cuts to the DSN (0.9 mm — narrower rings were not fully
+  respected). The GND pour uses solid pad connections (edge pads starve thermal spokes).
+- `make pcb-strict` must pass before fab.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.

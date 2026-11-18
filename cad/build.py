@@ -36,6 +36,8 @@ def main(geom_path: str, out_dir: str) -> int:
     params = CaseParams()
     case, info = build_case(board, env, params)
     shift = Pos(0, 0, -info["z_floor"])
+    if info.get("cell") is not None:
+        env.solids["battery"] = info["cell"]
 
     report = {"geom": geom_path, "params": params.__dict__, "checks": {}, "ok": True}
     for kind, items in (("solid", env.solids), ("keepout", env.keepouts)):
@@ -47,6 +49,14 @@ def main(geom_path: str, out_dir: str) -> int:
                                       "s": round(time.time() - t1, 1)}
             report["ok"] &= ok
             export_stl(shift * part, str(out / "assembly" / f"{kind}-{name}.stl"), tolerance=0.05)
+
+    # the cell must not collide with parts under the PCB or the plugged-in connector
+    if "battery" in env.solids:
+        others = [v for k, v in {**env.solids, **env.keepouts}.items()
+                  if k.startswith(("under_pcb", "jst_"))]
+        vol = sum((env.solids["battery"] & o).volume for o in others)
+        report["checks"]["battery_vs_parts"] = {"kind": "internal", "intersection_mm3": round(vol, 4), "ok": vol <= TOL}
+        report["ok"] &= vol <= TOL
 
     # the PCB must actually rest on something: its footprint overlaps the ledge
     support_area = board.outline.difference(info["cavity_2d"]).area

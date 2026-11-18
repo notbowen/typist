@@ -1,0 +1,5 @@
+#include "sweep_xiao.dtsi"
+
+&default_transform {
+    col-offset = <5>;
+};

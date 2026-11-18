@@ -1,0 +1,10 @@
+# ZMK build matrix. Board name: `seeeduino_xiao_ble` on ZMK releases based on
+# Zephyr 3.5; ZMK main after the Zephyr 4.1 upgrade calls it `xiao_ble//zmk`.
+---
+include:
+  - board: seeeduino_xiao_ble
+    shield: sweep_xiao_left
+  - board: seeeduino_xiao_ble
+    shield: sweep_xiao_right
+  - board: seeeduino_xiao_ble
+    shield: settings_reset

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from shapely import affinity
-from shapely.geometry import MultiPoint, Point
+from shapely.geometry import MultiPoint, Point, box
 from shapely.ops import unary_union
 
 from boardgeom import Board, prism
@@ -21,22 +21,29 @@ DIMS = {
     "choc_flange": (15.0, 15.0, 0.8),       # flange on top of the bottom housing
     "choc_top": (13.8, 13.8, 2.0),          # top housing
     "choc_pin_below": 1.4,                  # posts/pins protruding below PCB bottom
-    "keycap": (17.5, 16.5),                 # choc keycap footprint
+    "keycap": (17.5, 16.5),                 # choc keycap footprint (MBK / LDSA-style)
     "keycap_bottomout_z": 3.0,              # keycap underside above PCB top when pressed
     "keycap_top_z": 11.0,                   # keycap top above PCB top at rest
     "hotswap_h": 1.85,                      # Kailh choc hotswap socket height (below PCB)
     "hotswap_margin": 0.6,                  # socket body beyond its pads
-    # Pro Micro on low-profile sockets, components facing the PCB
-    "mcu": (18.0, 33.5, 6.0),               # w, l, height above PCB top
-    "mcu_usb_plug": (12.0, 7.5, 25.0),      # w, h, length of a USB plug + overmould
-    "mcu_usb_z": 3.0,                       # plug centre above PCB top
-    "pth_pin_below": 1.8,                   # trimmed through-hole leads
-    # PJ-320A TRRS jack
-    "trrs": (6.1, 12.2, 5.2),
-    "trrs_lip": 1.5,                        # barrel protrusion beyond the board edge
-    "trrs_plug_d": 8.0,                     # plug overmould diameter
-    "trrs_plug_len": 20.0,
-    "trrs_axis_z": 2.6,
+    "pth_pin_below": 1.8,                   # trimmed through-hole leads / solder fillets
+    "sod123_h": 1.35,                       # 1N4148W body height (below PCB)
+    # Seeed XIAO nRF52840, SMD-mounted flat on the top side, USB-C toward local +y (CAD)
+    "xiao": (17.8, 20.95, 1.0),             # w, l, PCB thickness (incl. solder)
+    "xiao_parts_h": 1.7,                    # shield can / passives above the XIAO PCB
+    "xiao_usb": (8.94, 7.35, 3.26),         # USB-C receptacle w, l, h
+    "xiao_usb_overhang": 1.55,              # receptacle front beyond the XIAO PCB edge
+    "usb_plug": (12.5, 7.0, 25.0),          # USB-C plug overmould w, h, length (keep-out)
+    # MSK12C02 side-actuated SPDT power switch (top side, tab edge)
+    "pwr_body": (6.7, 2.6, 1.5),            # along edge, depth, height
+    "pwr_lever": (1.5, 2.0, 1.4),           # w, protrusion beyond the body front, h
+    "pwr_access": (8.0, 7.0, 3.2),          # finger notch through the wall: w, depth, h
+    # JST SH 1.0 mm 2-pin SMD side entry (SM02B-SRSS-TB), bottom side
+    "jst": (6.0, 4.25, 2.95),               # w, d, h
+    "jst_plug_reach": 4.0,                  # mated plug + wire bend in front of the mouth
+    # LiPo pouch cell, 301230 (3.0 x 12 x 30 mm, ~110 mAh) - max envelope incl. tape/PCM
+    "cell": (12.5, 31.0, 3.1),              # w, l, thickness
+    "cell_floor_gap": 0.05,                 # sits on the case floor
 }
 
 
@@ -48,6 +55,9 @@ class Envelopes:
     keepouts: dict = field(default_factory=dict)
     bottom_2d: object = None
     bottom_depth: float = 0.0
+    cell_2d: object = None           # battery pocket footprint (case-side solid, see case.py)
+    cell_thickness: float = 0.0
+    mount_holes: list = field(default_factory=list)
 
 
 def _body_centre(board: Board, ref: str):
@@ -78,8 +88,10 @@ def build(board: Board) -> Envelopes:
             hull = unary_union([MultiPoint(p["poly"]) for p in bp]).convex_hull
             sock = hull.buffer(D["hotswap_margin"], quad_segs=3)
             below.append((sock, D["hotswap_h"]))
+    holes = {f.ref for f in board.by_name("MountingHole_NPTH")}
+    env.mount_holes = [(n["x"], n["y"], n["d"]) for n in board.npth if n["ref"] in holes]
     for n in board.npth:
-        if n["d"] > 1.0:
+        if n["d"] > 1.0 and n["ref"] not in holes:
             below.append((Point(n["x"], n["y"]).buffer(n["d"] / 2 + 0.2, quad_segs=4), D["choc_pin_below"]))
     if sw_parts:
         env.solids["switches"] = _union(sw_parts)
@@ -90,36 +102,58 @@ def build(board: Board) -> Envelopes:
         if p["type"] == "pth":
             below.append((Point(p["x"], p["y"]).buffer(0.8, quad_segs=3), D["pth_pin_below"]))
 
-    # --- Pro Micro ----------------------------------------------------------
-    for f in board.by_name("ProMicro"):
-        c = _body_centre(board, f.ref)
-        w, l, h = D["mcu"]
-        body = affinity.rotate(affinity.translate(
-            affinity.scale(Point(0, 0).buffer(1, cap_style=3), l / 2, w / 2), c.x, c.y), f.rot, origin=c)
-        env.solids[f"mcu_{f.ref}"] = prism(body, t, t + h)
-        dx, dy = board.edge_direction(f, "x", (c.x, c.y))   # USB is on the long axis
-        pw, ph, pl = D["mcu_usb_plug"]
-        # plug starts at the end of the board body and runs outward
-        start = l / 2 - 1.0
-        plug = _oriented_box(c.x + dx * (start + pl / 2), c.y + dy * (start + pl / 2), pl, pw, dx, dy)
-        z = t + D["mcu_usb_z"]
+    # --- SMD diodes on the back --------------------------------------------
+    for f in board.by_name("D_SOD-123"):
+        below.append((board.local_rect(f, 4.6, 2.0), D["sod123_h"]))
+
+    # --- XIAO nRF52840 -----------------------------------------------------
+    for f in board.by_name("XIAO_nRF52840_SMD"):
+        w, l, pt = D["xiao"]
+        uw, ul, uh = D["xiao_usb"]
+        oh = D["xiao_usb_overhang"]
+        # local frame here is CAD (y up) rotated: USB end is at local +y
+        body = board.local_rect(f, w, l, 0, -0.025)
+        parts = board.local_rect(f, w - 1.0, l - ul - 0.5, 0, -(ul + 0.5) / 2)
+        usb = board.local_rect(f, uw, ul, 0, 10.45 + oh - ul / 2)
+        env.solids[f"mcu_{f.ref}"] = _union([prism(body, t, t + pt),
+                                              prism(parts, t + pt, t + pt + D["xiao_parts_h"]),
+                                              prism(usb, t + pt, t + pt + uh)])
+        pw, ph, pl = D["usb_plug"]
+        front = 10.45 + oh
+        plug = board.local_rect(f, pw, pl, 0, front + pl / 2)
+        z = t + pt + uh / 2
         env.keepouts[f"usb_{f.ref}"] = prism(plug, z - ph / 2, z + ph / 2)
 
-    # --- TRRS jack ----------------------------------------------------------
-    for f in board.by_name("TRRS-PJ-320A-dual"):
-        c = _body_centre(board, f.ref)
-        w, l, h = D["trrs"]
-        dx, dy = board.edge_direction(f, "y", (c.x, c.y))   # jack axis = local y
-        reach = board.edge_distance(c.x, c.y, dx, dy)
-        lip = D["trrs_lip"]                                 # barrel sticks out past the edge
-        mid = reach + lip - l / 2
-        body = _oriented_box(c.x + dx * mid, c.y + dy * mid, l, w, dx, dy)
-        env.solids[f"trrs_{f.ref}"] = prism(body, t, t + h)
-        d, L = D["trrs_plug_d"], D["trrs_plug_len"]
-        s0 = reach - 0.5          # opening starts at the board edge so the barrel lip clears too
-        plug = _oriented_box(c.x + dx * (s0 + L / 2), c.y + dy * (s0 + L / 2), L, d, dx, dy)
-        z = t + D["trrs_axis_z"]
-        env.keepouts[f"trrs_plug_{f.ref}"] = prism(plug, z - d / 2, z + d / 2)
+    # --- power switch -------------------------------------------------------
+    for f in board.by_name("SPDT_C128955"):
+        bw, bd, bh = D["pwr_body"]
+        lw, lp, lh = D["pwr_lever"]
+        aw, ad, ah = D["pwr_access"]
+        # footprint: lever toward local +y (CAD), body front edge at +1.35
+        env.solids[f"pwr_{f.ref}"] = _union([
+            prism(board.local_rect(f, bw, bd, 0, 1.35 - bd / 2), t, t + bh),
+            prism(board.local_rect(f, lw, lp, 0.75, 1.35 + lp / 2), t + 0.1, t + 0.1 + lh)])
+        env.keepouts[f"pwr_access_{f.ref}"] = prism(board.local_rect(f, aw, ad, 0, 1.35 + ad / 2), t - 0.2, t + ah)
+
+    # --- battery connector + cell -------------------------------------------
+    for f in board.by_name("JST_SH_SM02B-SRSS-TB"):
+        jw, jd, jh = D["jst"]
+        # bottom-side footprint: mouth toward local +y (CAD), body centred on y=0
+        env.solids[f"jst_{f.ref}"] = prism(board.local_rect(f, jw, jd, 0, 0), -jh, 0)
+        r = D["jst_plug_reach"]
+        env.keepouts[f"jst_plug_{f.ref}"] = prism(board.local_rect(f, jw - 1.0, r, 0, jd / 2 + r / 2), -jh, -0.2)
+    env.cell_2d = None
+    mcus = board.by_name("XIAO_nRF52840_SMD")
+    if mcus:
+        m = mcus[0]
+        # cell lies under the controller tab, on the XIAO's local +x side - away from
+        # its BAT+/BAT- through-holes (the XIAO is not mirrored on the right half)
+        s = 1
+        cw, cl, ct = D["cell"]
+        top = m.y + 10.45 + D["xiao_usb_overhang"] - 0.9     # just inside the tab's top edge
+        cell = box(m.x + s * 3.65 - cw / 2, top - cl, m.x + s * 3.65 + cw / 2, top)
+        env.cell_2d = cell
+        env.cell_thickness = ct
 
     env.bottom_2d = unary_union([g for g, _ in below]) if below else None
     env.bottom_depth = max((d for _, d in below), default=0.0)

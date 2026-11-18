@@ -8,18 +8,19 @@ ERGO  := build/ergogen/pcbs
 # A board in pcb/ (hand-edited / routed, committed) wins over fresh ergogen output.
 pcb_src = $(if $(wildcard pcb/$(1).kicad_pcb),pcb/$(1).kicad_pcb,$(ERGO)/$(1).kicad_pcb)
 
-.PHONY: help setup ergogen pcb pcb-strict fab route case all verify clean
+.PHONY: help setup ergogen pcb pcb-strict fab route case all verify viewer clean
 
 help:
 	@echo "make setup        install/verify toolchain (venv, npm, docker images, freerouting)"
 	@echo "make ergogen      regenerate layout, outlines, unrouted PCBs from ergogen/config.yaml"
 	@echo "make pcb          DRC (unrouted allowed) + 2D/3D plots + CAD geometry for each side"
 	@echo "make pcb-strict   same, but unrouted connections fail"
-	@echo "make route SIDE=left   GND pour + Freerouting -> build/pcb/<side>-routed.kicad_pcb"
+	@echo "make route SIDE=left   Freerouting + GND pour -> build/pcb/<side>-routed.kicad_pcb"
 	@echo "make fab          gerbers/drill zip, pos, STEP per side"
 	@echo "make case         build123d case + fit check + mesh checks + slice + renders"
 	@echo "make all          ergogen pcb case"
 	@echo "make verify       pcb-strict case (release gate)"
+	@echo "make viewer       interactive 3D viewer + spec sheet -> build/artifact/sweep-xiao.html"
 	@echo "Boards: pcb/<side>.kicad_pcb if present, else $(ERGO)/<side>.kicad_pcb"
 
 setup:
@@ -44,8 +45,10 @@ pcb-strict:
 route:
 	@test -n "$(SIDE)" || { echo "usage: make route SIDE=left"; exit 2; }
 	mkdir -p build/pcb
-	scripts/kicad python3 scripts/pcb/add_zones.py $(call pcb_src,$(SIDE)) build/pcb/$(SIDE)-gnd.kicad_pcb GND
-	scripts/pcb/autoroute.sh build/pcb/$(SIDE)-gnd.kicad_pcb build/pcb/$(SIDE)-routed.kicad_pcb
+	# route GND as real tracks first, then pour: pours added before routing fragment
+	# into islands once Freerouting treats GND as a plane
+	scripts/pcb/autoroute.sh $(call pcb_src,$(SIDE)) build/pcb/$(SIDE)-tracks.kicad_pcb
+	scripts/kicad python3 scripts/pcb/add_zones.py build/pcb/$(SIDE)-tracks.kicad_pcb build/pcb/$(SIDE)-routed.kicad_pcb GND
 	scripts/pcb/check.sh build/pcb/$(SIDE)-routed.kicad_pcb build/pcb || true
 	@echo "Review build/pcb/$(SIDE)-routed-2d.png; if good: cp build/pcb/$(SIDE)-routed.kicad_pcb pcb/$(SIDE).kicad_pcb"
 
@@ -60,6 +63,9 @@ case:
 all: ergogen pcb case
 
 verify: pcb-strict case
+
+viewer:
+	$(PY) scripts/artifact/build_viewer.py build/artifact/sweep-xiao.html
 
 clean:
 	rm -rf build

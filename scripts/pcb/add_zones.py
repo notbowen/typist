@@ -28,7 +28,10 @@ for layer in (pcbnew.F_Cu, pcbnew.B_Cu):
     z.SetNet(net)
     z.SetLocalClearance(pcbnew.FromMM(clearance))
     z.SetMinThickness(pcbnew.FromMM(0.25))
-    z.SetPadConnection(pcbnew.ZONE_CONNECTION_THERMAL)
+    z.SetIslandRemovalMode(pcbnew.ISLAND_REMOVAL_MODE_ALWAYS)   # no floating copper
+    # solid connection: the few GND pads here sit near the board edge, where
+    # thermal reliefs end up with a single (starved) spoke
+    z.SetPadConnection(pcbnew.ZONE_CONNECTION_FULL)
     z.SetIsFilled(False)
     z.Outline().RemoveAllContours()
     z.Outline().Append(outline)
