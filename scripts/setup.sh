@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Idempotent toolchain setup. Safe to re-run; each step is skipped when done.
 #
-# System packages (prusa-slicer, libosmesa6) are part of the Lapiz project
-# environment. Elsewhere: apt install prusa-slicer libosmesa6 docker.io nodejs python3-venv
+# Needs docker, nodejs and python3-venv (apt install docker.io nodejs python3-venv).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -38,7 +37,5 @@ fi
 step "check"
 scripts/kicad-cli version
 npx ergogen --version
-command -v prusa-slicer >/dev/null || { echo "prusa-slicer missing (apt install prusa-slicer)"; exit 1; }
-echo "$(prusa-slicer --help 2>/dev/null | grep -m1 -o 'PrusaSlicer-[0-9.]*' || echo prusa-slicer)"
-.venv/bin/python -c "import build123d, trimesh, pyvista; print('build123d', build123d.__version__, '| trimesh', trimesh.__version__, '| pyvista', pyvista.__version__)"
+.venv/bin/python -c "import shapely, cairosvg; print('shapely', shapely.__version__, '| cairosvg', cairosvg.__version__)"
 echo "setup OK"

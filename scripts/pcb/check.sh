@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify one board: DRC gate, 2D plot, 3D renders, CAD geometry export.
+# Verify one board: DRC gate, 2D plot, 3D renders, geometry export (for the viewer).
 #   scripts/pcb/check.sh board.kicad_pcb out_dir [--strict]
 # Without --strict, unrouted connections are reported but allowed (fresh
 # ergogen output is unrouted). With --strict they fail the check.

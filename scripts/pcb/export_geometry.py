@@ -1,4 +1,4 @@
-"""Export board geometry for the CAD (case) side. Runs inside the KiCad container:
+"""Export board geometry for the 3D viewer (scripts/artifact). Runs inside the KiCad container:
 
   scripts/kicad python3 scripts/pcb/export_geometry.py board.kicad_pcb out.json
 

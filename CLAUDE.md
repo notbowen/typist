@@ -7,22 +7,23 @@ inner notch, controller tab and thumb diagonal grown ~2 mm for double-sided pads
 Choc v1 hotswap (Kailh Choc Sunset switches, blank white MBK caps — the parts the owner
 bought from SplitKB), Seeed XIAO nRF52840 per half (SMD, flat), 4x5 diode matrix,
 4 status LEDs, plug-in LiPo (JST-SH) under the controller tab, side power switch,
-ZMK BLE split (no TRRS). **No case**: the owner uses the bare PCB on feet.
-The cad/ case pipeline still exists but is not part of `all`/`verify`. Everything runs headless; every design change should be verified with
+ZMK BLE split (no TRRS). **No case**: the bare PCB stands on feet (M2 standoff + bumpon in the
+3 mounting holes, plus 3 adhesive feet); the old 3D-printed case pipeline is gone.
+Everything runs headless; every design change should be verified with
 the commands below and by **looking at the rendered PNGs** (Read them).
 
 ## Pipeline
 
 ```
-ergogen/config.yaml ──ergogen──► build/ergogen/pcbs/{left,right}.kicad_pcb   (unrouted)
-                                        │  (copy to pcb/<side>.kicad_pcb once you hand-edit/route;
+ergogen/config.yaml ──ergogen──► build/ergogen/pcbs/sweep.kicad_pcb   (unrouted)
+                                        │  (copy to pcb/sweep.kicad_pcb once you hand-edit/route;
                                         │   pcb/ wins over ergogen output everywhere)
                                         ▼
-                     kicad-cli DRC, plots, renders ──► build/pcb/<side>-*.png, -drc.json
-                     pcbnew export_geometry.py ──► build/pcb/<side>.geom.json
+                     kicad-cli DRC, plots, renders ──► build/pcb/sweep-*.png, -drc.json
+                     pcbnew export_geometry.py ──► build/pcb/sweep.geom.json
                                         ▼
-cad/ (build123d) case from the real PCB outline ──► build/cad/<side>/case.{step,stl}
-   fit check (case ∩ PCB/parts/keep-outs = 0) ─ mesh checks ─ PrusaSlicer slice ─ renders
+scripts/artifact/build_viewer.py (parts list, feet placement) + viewer_template.html (three.js)
+   ──► build/artifact/sweep-xiao.html   (both halves, spec sheet; published as a Lapiz artifact)
 ```
 
 ## Commands
@@ -35,16 +36,15 @@ cad/ (build123d) case from the real PCB outline ──► build/cad/<side>/case.
 | `make pcb` / `make pcb-strict` | DRC gate (+ unrouted fails with strict), 2D/3D plots, geometry export |
 | `make route SIDE=sweep` | Freerouting, then GND pour (~10 min) → `build/pcb/sweep-routed.kicad_pcb` |
 | `make fab` | gerbers+drill zip, pos csv, board STEP → `build/fab/` |
-| `make case` | (legacy, not maintained for the reversible board) case build + checks |
 | `make verify` | release gate: `pcb-strict` |
-| `make viewer` | interactive HTML viewer + spec sheet → `build/artifact/sweep-xiao.html` (needs `make pcb case` outputs) |
+| `make viewer` | interactive HTML viewer + spec sheet → `build/artifact/sweep-xiao.html` (needs `make pcb` outputs) |
 
 Look at after changes:
 - `build/pcb/sweep-2d.png` — outline, pads, tracks, silk (fastest PCB sanity view)
 - `build/pcb/sweep-3d-{top,bottom}.png` — KiCad 3D render (bottom = how the right half looks from above)
-- `build/cad/<side>/plot2d.png` — case walls vs PCB vs under-board parts vs cable keep-outs
-- `build/cad/<side>/assembly.png`, `case.png` — 3D renders
-- `build/cad/<side>/fit.json`, `mesh.json`, `build/pcb/<side>-drc.json` — machine-readable results
+- `build/pcb/sweep-drc.json` — machine-readable DRC result (the viewer's verification block reads it)
+- `build/artifact/sweep-xiao.html` — serve it (`python3 -m http.server -d build/artifact`) and check it
+  with the browser tool: both halves, Under view, LED toggle, explode, mobile width
 
 ## Tools and where they live
 
@@ -58,21 +58,23 @@ Look at after changes:
   `invalid_outline` — change the expand value (4 works for the reference layout).
 - **Freerouting 2.5.0** jar in `tools/` run with Java 25 in Docker (`eclipse-temurin:25-jre`).
   The native `freerouting-cli` 2.5.0 build crashes (GraalVM serialization error) — don't use it.
-- **build123d** (OpenCascade) for CAD, **shapely** for 2D, **trimesh** for mesh checks,
-  **PyVista/VTK** offscreen via OSMesa for renders, **PrusaSlicer 2.5** CLI for slicing
-  (`config/prusa-pla-0.2.ini`, 220×220 bed). Python lives in `.venv/`.
-- System packages `prusa-slicer`, `libosmesa6` are in the Lapiz project environment.
+- Python (`.venv/`, `requirements.txt`): **shapely** (outline maths in `sweep_outline.py` and the
+  viewer's foot placement), **CairoSVG** (KiCad SVG → PNG). `prusa-slicer` / `libosmesa6` in the
+  Lapiz project environment were only for the removed case pipeline.
+- The viewer is plain three.js 0.160 from jsDelivr (import map), everything else is inlined.
 
 ## Conventions / gotchas
 
-- CAD frame: mm, x right, **y up** (KiCad y is flipped by `export_geometry.py`),
-  z = 0 at PCB bottom. `case.stl` is exported in print orientation (bottom on z=0).
-- `cad/components.py` holds part envelopes (`DIMS`) — Choc v1 + hotswap sockets, SOD-123 diodes,
-  XIAO nRF52840 + USB-C, MSK12C02 switch, JST-SH socket, 301230 LiPo — and keep-outs (keycap
-  travel, USB-C plug, switch finger notch, mated battery plug). Case openings are cut
-  from the same keep-outs, so fit check and case can't disagree. Update `DIMS` for real parts.
-- `cad/case.py` `CaseParams`: wall, clearance, floor, under-PCB gap (3.5: LiPo 3.1 thick), ledge,
-  wall height, M2 screw bosses (at the mounting holes), battery locating fence.
+- Geometry frame (`geom.json`, viewer): mm, x right, **y up** (KiCad y is flipped by
+  `export_geometry.py`), z = 0 at PCB bottom.
+- Viewer (`scripts/artifact/`): `build_viewer.py` `DIMS` holds the part envelopes (socket boxes,
+  SOD-123, XIAO + USB-C, MSK12C02, JST-SH, 301230 cell + tape, LEDs, feet); update them for real
+  parts. It places the cell under the tab and picks the adhesive-foot spots automatically (clear
+  of sockets/posts/diodes/JST/cell on *both* faces, so the spots are the same on both halves) and
+  checks that the feet enclose the board centroid. The template builds everything procedurally:
+  the right half is the same board group rotated 180° about Y (a real flip, so the B texture ends
+  up on top), parts sit in per-face groups (`+z` = away from that face). LED colours there are only
+  a suggestion; meaning is the firmware's.
 - Outline: `scripts/ergogen/sweep_outline.py` converts the Sweep 2.2 Edge.Cuts into the ergogen
   polygon in `config.yaml` (controller tab widened 1.8 mm for the XIAO). Socket orientation per
   column follows the Sweep Bling LP (sockets face away from board edges).
@@ -88,8 +90,6 @@ Look at after changes:
   P0.10. Must match `firmware/zmk-config/config/boards/shields/sweep_xiao/sweep_xiao.dtsi`.
 - Socket orientation: pinky column and the outer thumb rot 0, the rest rot 180 — checked so no
   face's pads hit an edge with the grown outline (see `sweep_outline.py`).
-- `boardgeom.prism()` always extrudes +Z; shapely rings can be clockwise and build123d's
-  `extrude` follows the face normal — never call `extrude` on shapely-derived faces directly.
 - Fresh ergogen boards are unrouted: `make pcb` allows unconnected items, `make pcb-strict` doesn't.
   `silk_over_copper` warnings come from ergogen's footprints and are harmless.
 - Ergogen regenerates boards from scratch (routing lost). Once routed/edited, the board belongs

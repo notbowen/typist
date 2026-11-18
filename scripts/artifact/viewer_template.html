@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sweep XIAO: wireless Ferris-Sweep-style split</title>
+<title>Sweep XIAO: interactive 3D model + spec sheet</title>
 <style>
   :root {
     --bg: #f4f2ee; --panel: #ffffff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e3e0da;
@@ -13,14 +13,15 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
     font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  body { display: flex; flex-direction: column; }
   header { padding: 14px 20px 10px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
     border-bottom: 1px solid var(--line); background: var(--panel); }
   header h1 { font-size: 18px; margin: 0; letter-spacing: -0.01em; }
   header .sub { color: var(--muted); font-size: 13px; }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
   .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: #eef1f7; color: var(--accent); white-space: nowrap; }
-  main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr); height: calc(100% - 58px); }
-  #viewer { position: relative; min-height: 420px; background: radial-gradient(ellipse at 50% 40%, #ffffff 0%, #ebe8e2 75%); }
+  main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr); flex: 1; min-height: 0; }
+  #viewer { position: relative; min-height: 420px; background: radial-gradient(ellipse at 50% 40%, #ffffff 0%, #ebe8e2 75%); overflow: hidden; }
   #viewer canvas { display: block; width: 100%; height: 100%; }
   .toolbar { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
   .box { pointer-events: auto; background: rgba(255,255,255,0.92); border: 1px solid var(--line); border-radius: 10px;
@@ -28,6 +29,11 @@
   .box label.t { font-size: 11px; color: var(--muted); margin-right: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
   button.seg { border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 4px 9px; font-size: 12px; cursor: pointer; color: var(--ink); }
   button.seg.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  button.led { border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 3px 8px 3px 6px; font-size: 12px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; color: var(--ink); }
+  button.led i { width: 10px; height: 10px; border-radius: 50%; background: #ccc; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+  button.led.on { background: #1d1d1f; color: #fff; border-color: #1d1d1f; }
+  button.led.on i { box-shadow: 0 0 6px 2px var(--c); background: var(--c); }
   .toggles label { font-size: 12px; display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; cursor: pointer; white-space: nowrap; }
   .swatch { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
   .swatch.on { box-shadow: 0 0 0 2px var(--ink); }
@@ -35,7 +41,6 @@
   .legend { font-size: 11px; color: var(--muted); }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
   input[type=range] { width: 130px; }
-  #hint { position: absolute; right: 14px; bottom: 14px; font-size: 11px; color: var(--muted); }
   #loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
   aside { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
   nav.tabs { display: flex; gap: 2px; padding: 8px 10px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
@@ -46,17 +51,22 @@
   .pane.on { display: block; }
   h2 { font-size: 15px; margin: 18px 0 8px; }
   h2:first-child { margin-top: 4px; }
+  h3 { font-size: 13.5px; margin: 14px 0 6px; }
   p { margin: 6px 0 10px; }
+  ol, ul { margin: 6px 0 10px; padding-left: 20px; }
+  li { margin: 3px 0; }
+  a { color: var(--accent); }
   .muted { color: var(--muted); }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 4px 0 12px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { font-weight: 600; color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; }
   td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: #f3f1ec; padding: 1px 4px; border-radius: 4px; }
+  code { overflow-wrap: anywhere; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: #f3f1ec; padding: 1px 4px; border-radius: 4px; }
   .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
   .b-ok { background: var(--okbg); color: var(--ok); }
   .b-warn { background: var(--warnbg); color: var(--warn); }
   .b-bad { background: var(--badbg); color: var(--bad); }
+  .b-buy { background: #eef1f7; color: var(--accent); }
   .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13px; margin: 6px 0 12px; }
   .kv div:nth-child(odd) { color: var(--muted); }
   .note { background: var(--warnbg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin: 8px 0; }
@@ -64,13 +74,23 @@
   .stat div { background: #f7f5f1; border-radius: 10px; padding: 9px 11px; }
   .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
   .stat span { font-size: 11.5px; color: var(--muted); }
+  .face-F { color: #1f5a35; font-weight: 600; }
+  .face-B { color: #7a3d0c; font-weight: 600; }
   svg.stack text { font-size: 10px; fill: var(--muted); }
   @media (max-width: 900px) {
-    main { grid-template-columns: 1fr; height: auto; }
-    #viewer { height: 62vh; }
-    #hint { display: none; }
+    body { display: block; }
+    main { grid-template-columns: minmax(0, 1fr); height: auto; }
+    .pane { overflow-x: auto; padding: 12px 12px 30px; }
+    table { font-size: 12px; }
+    th, td { padding: 5px 5px; }
+    #viewer { height: 70vh; min-height: 480px; }
     aside { border-left: 0; border-top: 1px solid var(--line); }
-    .pane { max-height: none; }
+    .toolbar { gap: 5px; left: 8px; right: 8px; top: 8px; }
+    .bottombar { gap: 5px; left: 8px; right: 8px; bottom: 8px; }
+    .box { padding: 4px 6px; }
+    button.seg, button.led { padding: 3px 7px; }
+    .legend { display: none; }
+    input[type=range] { width: 100px; }
   }
 </style>
 <script type="importmap">
@@ -83,7 +103,7 @@
 <body>
 <header>
   <h1>Sweep XIAO</h1>
-  <span class="sub">Ferris-Sweep-shaped 34-key wireless split · Seeed XIAO nRF52840 · plug-in LiPo per half · Kailh Choc Sunset + white MBK, hotswap</span>
+  <span class="sub">Ferris-Sweep-shaped 34-key wireless split · one reversible PCB for both halves · Seeed XIAO nRF52840 · plug-in LiPo · Kailh Choc Sunset + white MBK, hotswap · no case</span>
   <div class="chips" id="chips"></div>
 </header>
 <main>
@@ -94,29 +114,28 @@
         <button class="seg on" data-half="both">Both</button><button class="seg" data-half="left">Left</button><button class="seg" data-half="right">Right</button></div>
       <div class="box" id="viewBox"><label class="t">View</label>
         <button class="seg on" data-view="iso">3D</button><button class="seg" data-view="top">Top</button><button class="seg" data-view="bottom">Under</button><button class="seg" data-view="side">Side</button></div>
+      <div class="box" id="ledBox"><label class="t">LEDs</label></div>
       <div class="box toggles" id="toggles"><label class="t">Layers</label></div>
     </div>
     <div class="bottombar">
-      <div class="box"><label class="t">Explode</label><input type="range" id="explode" min="0" max="1" step="0.01" value="0"></div>
-      <div class="box"><label class="t">Case</label><span id="caseSw"></span></div>
+      <div class="box"><label class="t">Explode</label><input type="range" id="explode" min="0" max="1" step="0.01" value="0" aria-label="Explode"></div>
       <div class="box"><label class="t">Keycaps</label><span id="capSw"></span></div>
-      <div class="box legend"><i style="background:#2b4c8c"></i>XIAO<i style="background:#b8bcc6"></i>LiPo cell<i style="background:#ff4d4d;opacity:.6"></i>keep-outs (plug / finger room)</div>
+      <div class="box legend"><i style="background:#2b4c8c"></i>XIAO<i style="background:#b8bcc6"></i>LiPo<i style="background:#e0a040"></i>Kapton<i style="background:#3a3a3c"></i>feet<span style="margin-left:10px">· drag to orbit, scroll to zoom, right-drag to pan</span></div>
     </div>
-    <div id="hint">drag to orbit · scroll to zoom · right-drag to pan</div>
   </section>
   <aside>
     <nav class="tabs" id="tabs">
       <button class="on" data-tab="overview">Overview</button>
       <button data-tab="compat">Compatibility</button>
       <button data-tab="elec">Electrical</button>
-      <button data-tab="mech">Case &amp; print</button>
+      <button data-tab="build">Build guide</button>
       <button data-tab="bom">BOM &amp; ordering</button>
       <button data-tab="fw">Firmware</button>
     </nav>
     <div class="pane on" id="overview"></div>
     <div class="pane" id="compat"></div>
     <div class="pane" id="elec"></div>
-    <div class="pane" id="mech"></div>
+    <div class="pane" id="build"></div>
     <div class="pane" id="bom"></div>
     <div class="pane" id="fw"></div>
   </aside>
@@ -125,86 +144,141 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
 
 const D = /*__DATA__*/null;
-const L = D.sides.left, R = D.sides.right;
+const B = D.board, T = B.thickness, DM = D.dims;
 const fmt = (v, n = 1) => Number(v).toFixed(n);
 const badge = (ok, txt) => `<span class="badge ${ok === true ? 'b-ok' : ok === 'warn' ? 'b-warn' : 'b-bad'}">${txt ?? (ok === true ? 'OK' : ok === 'warn' ? 'check' : 'FAIL')}</span>`;
+const F = '<span class="face-F">F</span>', Bk = '<span class="face-B">B</span>';
+// Suggested colours, one per LED position; what each LED means is up to the firmware.
+const LEDS = [
+  { name: 'LED1', pin: 'D6', col: '#ff2a1a', label: 'red' },
+  { name: 'LED2', pin: 'D7', col: '#ff8a00', label: 'amber' },
+  { name: 'LED3', pin: 'P0.09 (NFC1)', col: '#ffd400', label: 'yellow' },
+  { name: 'LED4', pin: 'P0.10 (NFC2)', col: '#2bd94a', label: 'green' },
+];
+const routed = D.drc.unconnected === 0;
+const [bw, bh] = B.size;
+const footH = DM.foot[1], stackH = DM.standoff[1] + DM.bumpon[1];
+const capTop = 9.8;  // keycap top above the PCB top (model: Choc v1 + MBK)
 
 // ------------------------------------------------------------------ text panes
-const allFit = s => Object.values(s.checks).every(c => c.ok);
-const routed = s => s.drc.unconnected === 0;
 document.getElementById('chips').innerHTML = [
-  `PCB DRC: ${L.drc.errors + R.drc.errors} errors`,
-  routed(L) && routed(R) ? 'fully routed' : `${L.drc.unconnected + R.drc.unconnected} unrouted (autoroute pending)`,
-  `case fit: ${allFit(L) && allFit(R) ? 'pass' : 'FAIL'}`,
-  `${D.slice.left.grams ?? '?'} g PLA / half`,
+  `DRC: ${D.drc.errors} errors`,
+  routed ? 'fully routed' : `${D.drc.unconnected} unrouted`,
+  `1 design · flip it for the right half`,
+  `${fmt(bw)} × ${fmt(bh)} mm`,
 ].map(t => `<span class="chip">${t}</span>`).join('');
 
-const cs = L.case_size;
 document.getElementById('overview').innerHTML = `
 <h2>What this is</h2>
-<p>Two mirrored halves that follow the open-source <b>Ferris Sweep 2</b> geometry (the board Ben Vallack popularised): same 5×3 + 2 column-staggered layout, the same
-board outline with its sweeping top and bottom arcs, controller tab at the inner top corner, and the two splayed thumb keys. The key positions are taken from the Sweep 2.2 KiCad
-files and land within 0.02 mm of them. The Pro Micro and TRRS jack are gone. Each half has its own
-<b>Seeed XIAO nRF52840</b>, a <b>plug-in LiPo cell</b> under the controller tab and a side power switch. The halves talk to each other over Bluetooth (ZMK).</p>
+<p>A wireless 34-key split with the open-source <b>Ferris Sweep 2</b> layout: 5×3 column-staggered keys plus 2 thumb keys per half, and the Sweep 2.2 outline (grown about 2 mm at the pinky edge, inner notch, controller tab and thumb diagonal to fit the double-sided pads).
+Both halves are <b>the same PCB</b>. The right half is a second board flipped over, so one JLCPCB order of 5 boards covers two keyboards and a spare.
+Each half has a <b>Seeed XIAO nRF52840</b> soldered flat, a <b>plug-in LiPo</b> taped under the controller tab, a side power switch and <b>4 status LEDs</b>. The halves talk over Bluetooth (ZMK). There is no case: the bare board stands on rubber feet.</p>
 <div class="stat">
   <div><b>34</b><span>keys (17 per half)</span></div>
-  <div><b>${fmt(cs[0],0)}×${fmt(cs[1],0)}×${fmt(cs[2],1)}</b><span>case per half, mm</span></div>
-  <div><b>${fmt(L.pcb_bottom_z + L.thickness + 6.4 + 3.4, 1)}</b><span>desk to keycap top, mm (without feet)</span></div>
-  <div><b>110 mAh</b><span>301230 LiPo per half (suggested)</span></div>
+  <div><b>${fmt(bw)}×${fmt(bh)}</b><span>board, mm (1.6 mm FR-4)</span></div>
+  <div><b>1 × 5</b><span>one design, 5 boards = 2 keyboards + spare</span></div>
+  <div><b>≈${fmt(footH + T + capTop, 0)} mm</b><span>desk to keycap top, on ${footH} mm feet</span></div>
 </div>
+<h2>Telling the halves apart</h2>
+<p>Bare boards are identical. A board becomes a left or right half the moment you solder the first part, so decide first and mark it (<b>L</b> / <b>R</b> with a marker on the socket face):</p>
+<ul>
+<li>Hold the board so the <b>controller tab</b> (the narrow extension with the XIAO outline and "USB-C" silk) is at the <b>top</b> and the two angled thumb keys are at the bottom.</li>
+<li>Tab at the <b>top right</b>: the face you're looking at is the <b>top of the LEFT half</b> (face ${F}).</li>
+<li>Tab at the <b>top left</b>: you're looking at face ${Bk}, the <b>top of the RIGHT half</b>.</li>
+<li>Either way the tab and the thumbs point toward the middle of your desk.</li>
+</ul>
+<h2>What goes on which face</h2>
+<table>
+<tr><th>Part</th><th>Left half</th><th>Right half</th></tr>
+<tr><td>Choc switches + keycaps</td><td>${F} (up)</td><td>${Bk} (up)</td></tr>
+<tr><td>XIAO nRF52840</td><td>${F}</td><td>${Bk}</td></tr>
+<tr><td>4 LEDs + 4 resistors</td><td>${F}</td><td>${Bk}</td></tr>
+<tr><td>MSK12C02 power switch</td><td>${F}</td><td>${Bk}</td></tr>
+<tr><td>17 hotswap sockets</td><td>${Bk} (down)</td><td>${F} (down)</td></tr>
+<tr><td>17 diodes</td><td>${Bk}</td><td>${F}</td></tr>
+<tr><td>JST-SH jack + LiPo cell</td><td>${Bk}</td><td>${F}</td></tr>
+<tr><td>Feet</td><td>${Bk}</td><td>${F}</td></tr>
+</table>
+<p class="muted">Rule of thumb: what you type on, look at or switch goes on the top face; sockets, diodes and the battery go underneath. Every footprint has pads on both faces; the other face's pads stay empty.</p>
+<h2>Verification status</h2>
+<table>
+<tr><th>Check</th><th>Result</th><th></th></tr>
+<tr><td>KiCad ${D.drc.kicad} DRC errors</td><td class="num">${D.drc.errors}</td><td>${badge(D.drc.errors === 0)}</td></tr>
+<tr><td>Unrouted connections</td><td class="num">${D.drc.unconnected}</td><td>${badge(routed || 'warn')}</td></tr>
+<tr><td>DRC warnings</td><td>${Object.entries(D.drc.warn_types).map(([k, v]) => `${v}× <code>${k}</code>`).join(', ') || 'none'}. These come from ergogen's footprint silk: cosmetic, not fab problems.</td><td>${badge(true, 'cosmetic')}</td></tr>
+<tr><td>Copper</td><td class="num">${D.stats.tracks} track segments, ${D.stats.vias} vias, GND pour on both layers</td><td>${badge(true)}</td></tr>
+<tr><td>Feet support the board's centre of area</td><td>3 standoff feet + 3 adhesive feet (see Build guide)</td><td>${badge(D.feet.stable || 'warn')}</td></tr>
+</table>
+<p class="muted">DRC run ${D.drc.date.slice(0, 10)} by <code>make verify</code> on <code>pcb/sweep.kicad_pcb</code>. Use the toolbar to switch halves, light the LEDs, explode the stack and look at the underside (<b>Under</b>).</p>
 <h2>Differences from a stock Sweep</h2>
 <table>
 <tr><th>Item</th><th>Ferris Sweep 2</th><th>This design</th></tr>
-<tr><td>Controller</td><td>Pro Micro / nice!nano on sockets</td><td>XIAO nRF52840, soldered flat on its castellated pads; BAT pads reached through plated holes</td></tr>
-<tr><td>Wiring</td><td>direct pin, no diodes</td><td>4×5 matrix with 17 SOD-123 diodes (the XIAO has 11 GPIO, a half needs 17 direct pins)</td></tr>
-<tr><td>Link between halves</td><td>TRRS cable</td><td>Bluetooth LE (ZMK split), no cable</td></tr>
-<tr><td>Power</td><td>USB, or a LiPo soldered to pads</td><td>LiPo on a JST-SH plug in a bay in the case, slide switch, charges over the XIAO's USB-C</td></tr>
-<tr><td>Switch sockets</td><td>Mill-Max or soldered</td><td>Kailh Choc v1 hotswap sockets, oriented like the Sweep Bling LP</td></tr>
-<tr><td>Switches / caps</td><td>any Choc v1</td><td>Kailh Choc Sunset (tactile, 40 gf) with blank white MBK caps</td></tr>
-<tr><td>Outline</td><td>Sweep 2.2</td><td>Sweep 2.2, but the controller tab is 1.8 mm wider so the XIAO's pads keep 0.5 mm from the board edge</td></tr>
-<tr><td>Case</td><td>none / third-party</td><td>3D-printed tray; PCB held by 3 M2 screws at the Sweep Bling LP hole positions</td></tr>
-</table>
-<h2>Verification status</h2>
-<table>
-<tr><th>Check</th><th>Left</th><th>Right</th></tr>
-<tr><td>KiCad DRC errors</td><td>${badge(L.drc.errors===0, L.drc.errors)}</td><td>${badge(R.drc.errors===0, R.drc.errors)}</td></tr>
-<tr><td>Unrouted connections</td><td>${badge(routed(L)||'warn', L.drc.unconnected)}</td><td>${badge(routed(R)||'warn', R.drc.unconnected)}</td></tr>
-<tr><td>Case vs PCB / parts / keep-outs</td><td>${badge(allFit(L))}</td><td>${badge(allFit(R))}</td></tr>
-<tr><td>Mesh: thinnest wall (p01)</td><td class="num">${fmt(L.mesh.wall_p01,2)} mm</td><td class="num">${fmt(R.mesh.wall_p01,2)} mm</td></tr>
-<tr><td>PrusaSlicer, 0.2 mm PLA</td><td class="num">${D.slice.left.grams} g · ${D.slice.left.time}</td><td class="num">${D.slice.right.grams} g · ${D.slice.right.time}</td></tr>
-</table>
-<p class="muted">Use the toolbar to switch halves, explode the stack, hide the case, and see the LiPo bay from underneath.</p>`;
-
-const fitRows = s => Object.entries(s.checks).map(([k, c]) => {
-  const v = c.intersection_mm3 !== undefined ? `${c.intersection_mm3} mm³ overlap` : c.ledge_area_mm2 !== undefined ? `${c.ledge_area_mm2} mm² ledge` : '';
-  return `<tr><td><code>${k}</code></td><td class="num">${v}</td><td>${badge(c.ok)}</td></tr>`; }).join('');
+<tr><td>PCB</td><td>reversible, Pro Micro on sockets</td><td>reversible, with every footprint (XIAO included) duplicated on both faces</td></tr>
+<tr><td>Controller</td><td>Pro Micro / nice!nano</td><td>XIAO nRF52840, soldered flat on its castellated pads. Its BAT and NFC pads are reached through plated holes.</td></tr>
+<tr><td>Wiring</td><td>direct pin, no diodes</td><td>4×5 diode matrix (the XIAO has 11 GPIO; a half needs 17 keys)</td></tr>
+<tr><td>Link between halves</td><td>TRRS cable</td><td>Bluetooth LE (ZMK split)</td></tr>
+<tr><td>Power</td><td>USB</td><td>LiPo on a JST-SH plug, slide switch, charged over the XIAO's USB-C</td></tr>
+<tr><td>Extras</td><td>none</td><td>4 status LEDs per half</td></tr>
+<tr><td>Switch sockets</td><td>soldered / Mill-Max</td><td>Kailh Choc v1 hotswap</td></tr>
+<tr><td>Case</td><td>none</td><td>none: rubber feet, 3 of them on M2 standoffs in the Sweep Bling LP holes</td></tr>
+</table>`;
 
 document.getElementById('compat').innerHTML = `
-<h2>Part-to-part compatibility</h2>
+<h2>Reversible board: caveats</h2>
+<table>
+<tr><th>Item</th><th>What to know</th><th></th></tr>
+<tr><td>Pads on both faces</td><td>Every footprint is duplicated on both faces. Solder only the face that half needs (Overview table). The unused pads stay bare copper. That's harmless, but don't bridge them with solder or stray leads.</td><td>${badge(true)}</td></tr>
+<tr><td>Hotswap sockets</td><td>Each key has both sockets' pads and holes. The switch's two pins use the holes of the populated socket; the third 3 mm hole stays empty. The other face's inner socket pads are narrowed so they clear the populated socket's hole.</td><td>${badge(true)}</td></tr>
+<tr><td>Diodes, LEDs</td><td>Same pads at the same spot on both faces, so the direction marks (diode bar, LED cathode bar) are correct on either face. Match the part's mark to the silk.</td><td>${badge(true)}</td></tr>
+<tr><td>JST-SH jack</td><td>Pin 1 (+) is mirrored per face, so + stays where the silk says on both halves. The cable enters toward the cell.</td><td>${badge(true)}</td></tr>
+<tr><td>Power switch</td><td>Pads mirrored per face; the lever sticks out over the tab's outer edge on both halves.</td><td>${badge(true)}</td></tr>
+</table>
+<h2>XIAO nRF52840</h2>
 <table>
 <tr><th>Interface</th><th>How it's satisfied</th><th></th></tr>
-<tr><td>XIAO ↔ PCB footprint</td><td>14 castellated pads at 2.54 mm pitch, pad centres ±8.55 mm. BAT− and BAT+ through-holes at (−4.445, −2.22) and (−4.445, −0.32) mm from the module centre, cross-checked against two published XIAO footprints. Fits the XIAO nRF52840, the Sense and the Plus (the Plus's extra pads go unused).</td><td>${badge(true)}</td></tr>
-<tr><td>GPIO budget</td><td>9 of 11 GPIO: columns D0–D4, rows D5, D8, D9, D10. D6/D7 (UART) and the NFC pads stay free.</td><td>${badge(true)}</td></tr>
-<tr><td>LiPo ↔ XIAO charger</td><td>The XIAO's BQ25101 charges single-cell 3.7 V LiPo at 50 mA by default (100 mA optional). On a 110 mAh 301230 that is about 0.45 C, inside the usual ≤1 C limit. Use a cell with a protection circuit (PCM).</td><td>${badge(true)}</td></tr>
-<tr><td>LiPo ↔ connector</td><td>JST SH 1.0 mm, 2-pin. Silkscreen marks + and − next to the socket. Cell polarity is not standardised: cheap cells are often wired backwards, so check with a meter before plugging in.</td><td>${badge('warn','verify cell')}</td></tr>
-<tr><td>Power switch ↔ charging</td><td>The switch sits between the cell and BAT+, so the cell only charges while the switch is ON. Turn it on to charge over USB-C.</td><td>${badge('warn','by design')}</td></tr>
-<tr><td>Switches ↔ sockets</td><td>Kailh Choc Sunset switches are Choc v1 (same body and pins as PG1350), so they fit the SplitKB Kailh Choc hotswap sockets (CPG135001S30) and the 3.43 mm centre-post and 1.7 mm side-post holes. The design's 3.0 mm keycap travel allowance covers the Sunset's 2.95 mm total travel.</td><td>${badge(true)}</td></tr>
-<tr><td>Keycaps ↔ spacing</td><td>Blank MBK caps are 17.5 × 16.5 mm on 18 × 17 mm Choc spacing, which leaves 0.5 mm between neighbouring caps. Every key is 1u, so all 34 caps are the same, and blank caps fit the rotated thumb keys too. The case is checked against the full keycap travel volume.</td><td>${badge(true)}</td></tr>
-<tr><td>XIAO ↔ inner keycaps</td><td>0.45 mm gap between the XIAO body and the inner-column keycaps (that's why the tab was widened 1.8 mm)</td><td>${badge(true)}</td></tr>
-<tr><td>USB-C cable ↔ case</td><td>Opening is ${D.dims.usb_plug[0]} × ${D.dims.usb_plug[1]} mm, starting at the XIAO receptacle, so it fits typical USB-C plugs with overmoulds up to 12.5 mm wide</td><td>${badge(true)}</td></tr>
-<tr><td>LiPo ↔ battery bay</td><td>The bay takes a cell up to ${D.dims.cell[0]} × ${D.dims.cell[1]} × ${D.dims.cell[2]} mm. It's checked against the hotswap sockets, diodes, the connector and the room the mated plug needs.</td><td>${badge(L.checks.battery_vs_parts?.ok && R.checks.battery_vs_parts?.ok)}</td></tr>
-<tr><td>PCB ↔ case screws</td><td>3 × M2 per half, using the Sweep Bling LP hole positions (all between keycaps). The printed bosses have a ${D.case.pilot_d} mm pilot for M2 self-tapping screws.</td><td>${badge(true)}</td></tr>
-<tr><td>Halves ↔ each other</td><td>BLE split: the left half is the central and connects to the computer, the right half is the peripheral. No TRRS cable, so nothing to short if you hot-plug.</td><td>${badge(true)}</td></tr>
+<tr><td>Mirrored pads</td><td>Face ${F} has the XIAO's 14 castellated pads at their normal spots. Face ${Bk} has the same pads mirrored, so the module lies face-up on either half. Each XIAO pin gets the same net on both faces, so <b>both halves share one pin map and one firmware</b>. Pads at the same x/y on opposite faces carry different signals. They're SMD and never joined by a via, so that's fine, but never drill or via through them.</td><td>${badge(true)}</td></tr>
+<tr><td>BAT / NFC through-holes</td><td>BAT−, BAT+, NFC1 and NFC2 are pads on the XIAO's underside, reached by plated through-holes: solder them from the socket face. Each half uses 4 of the 8 holes. The other 4 (the mirrored set, for the other half) also sit under the module. They carry GND, BAT+, LED3 and LED4 and could touch the XIAO's other underside pads.</td><td>${badge('warn', 'tape')}</td></tr>
+<tr><td>→ Kapton before soldering</td><td>Before you solder the XIAO, put a small strip of <b>Kapton on the controller face over the 4 unused holes</b>. With USB-C pointing away from you, these are the BAT pair right of centre and the NFC pair at the bottom left (shown in amber in the 3D view; hide the XIAO to see them). Keep the tape off the castellated pads and the used holes.</td><td>${badge('warn', 'do this')}</td></tr>
+<tr><td>Footprint</td><td>Pad centres ±8.55 mm, 2.54 mm pitch. BAT and NFC hole positions were cross-checked against two published XIAO footprints. Fits the XIAO nRF52840, Sense and Plus (the Plus's extra pads go unused).</td><td>${badge(true)}</td></tr>
+<tr><td>GPIO budget</td><td><b>Every XIAO GPIO is used</b>: D0–D4 are the columns, D5/D8/D9/D10 the rows, D6/D7 drive LED1/LED2, and the two NFC pads (P0.09/P0.10) drive LED3/LED4. There's no spare pin for a display or RGB.</td><td>${badge(true, 'full')}</td></tr>
+<tr><td>NFC pins as GPIO</td><td>P0.09/P0.10 are NFC antenna pins by default. The firmware sets <code>CONFIG_NFCT_PINS_AS_GPIOS=y</code> (on Zephyr 4.x: <code>&amp;uicr { nfct-pins-as-gpios; }</code>), so NFC can't be used. Nordic notes a small leakage current between the two pins when they're driven to different levels: µA-scale, negligible next to the LEDs themselves.</td><td>${badge(true)}</td></tr>
+<tr><td>D6 / D7</td><td>These are the XIAO's UART TX/RX. The UART is disabled in firmware, so there's no serial console (USB logging still works).</td><td>${badge(true)}</td></tr>
 </table>
-<h2>Automated fit check, left</h2><table><tr><th>Body</th><th>Result</th><th></th></tr>${fitRows(L)}</table>
-<h2>Automated fit check, right</h2><table><tr><th>Body</th><th>Result</th><th></th></tr>${fitRows(R)}</table>
-<p class="muted">Every check is a boolean intersection of the printed case with that body (or keep-out volume), computed in OpenCascade. <code>battery_vs_parts</code> checks the cell against the under-board parts and the connector plug. The case's openings are cut from the same keep-out volumes, so the openings and the check always agree.</p>`;
+<h2>LEDs and power</h2>
+<table>
+<tr><th>Interface</th><th>How it's satisfied</th><th></th></tr>
+<tr><td>LED current</td><td>GPIO (3.3 V) → 1 kΩ → LED → GND. With Vf 1.9–2.2 V that's <b>≈1.1–1.4 mA</b> per LED (≈1.2 mA typical), well within the nRF52840's standard drive. Use LEDs with Vf ≤ 2.2 V (red, amber, yellow, green). White or blue (Vf ≈ 3 V) would barely light.</td><td>${badge(true)}</td></tr>
+<tr><td>LED ↔ battery</td><td>All 4 on continuously draws ≈5 mA, which would empty a 110 mAh cell in about a day. Flash them briefly (battery or connection status), and don't leave them lit.</td><td>${badge('warn', 'firmware')}</td></tr>
+<tr><td>LiPo ↔ XIAO charger</td><td>The XIAO's BQ25101 charges a single 3.7 V cell at 50 mA (100 mA optional). That's about 0.45 C on a 110 mAh 301230, inside the usual ≤1 C. Use a cell with a protection circuit (PCM).</td><td>${badge(true)}</td></tr>
+<tr><td>LiPo ↔ connector</td><td>JST SH 1.0 mm, 2-pin, pin 1 = + (marked on the silk). Ampul cells come with a JST PH plug, so re-terminate them with a JST-SH pigtail. Cell polarity isn't standardised, so <b>check with a meter</b> before plugging in.</td><td>${badge('warn', 'verify cell')}</td></tr>
+<tr><td>Power switch ↔ charging</td><td>The switch sits between the cell and BAT+, so the cell only charges while the switch is ON.</td><td>${badge('warn', 'by design')}</td></tr>
+</table>
+<h2>Mechanical</h2>
+<table>
+<tr><th>Interface</th><th>How it's satisfied</th><th></th></tr>
+<tr><td>Switches ↔ sockets</td><td>Kailh Choc Sunset is a Choc v1 (same body and pins as PG1350), so it fits the Kailh Choc hotswap sockets (CPG135001S30): 3.43 mm centre post, 1.7 mm side posts.</td><td>${badge(true)}</td></tr>
+<tr><td>Keycaps ↔ spacing</td><td>MBK caps are 17.5 × 16.5 mm on 18 × 17 mm Choc spacing, leaving 0.5 mm between caps. Every key is 1u, so blank caps also fit the rotated thumbs.</td><td>${badge(true)}</td></tr>
+<tr><td>XIAO ↔ inner keycaps</td><td>The tab is widened so the XIAO body clears the inner-column caps and its pads keep ≥0.5 mm from the board edge.</td><td>${badge(true)}</td></tr>
+<tr><td>Underside ↔ feet</td><td>Below the board: sockets ${DM.socket_box[2]} mm, diodes ${DM.sod123[2]} mm, JST ${DM.jst[2]} mm, cell + tape ≈${fmt(DM.cell[2] + DM.cell_tape, 1)} mm. The feet are ${footH} mm (adhesive) / ${fmt(stackH, 1)} mm (standoff + bumpon), leaving ≈${fmt(Math.min(footH, stackH) - DM.cell[2] - DM.cell_tape, 1)} mm under the cell. Switch posts poke ~1 mm through the board, and the feet sit clear of them.</td><td>${badge(true)}</td></tr>
+<tr><td>Halves ↔ each other</td><td>BLE split: the left half is the central (it connects to the computer), the right is the peripheral. There's no cable between them.</td><td>${badge(true)}</td></tr>
+</table>`;
 
+const pinRows = [
+  ['D0', 'P0.02', 'C0', 'column 0 (pinky)'], ['D1', 'P0.03', 'C1', 'column 1 (ring)'], ['D2', 'P0.28', 'C2', 'column 2 (middle)'],
+  ['D3', 'P0.29', 'C3', 'column 3 (index, inner thumb)'], ['D4', 'P0.04', 'C4', 'column 4 (inner, outer thumb)'],
+  ['D5', 'P0.05', 'R0', 'row 0 (top)'], ['D8', 'P1.13', 'R1', 'row 1 (home)'], ['D9', 'P1.14', 'R2', 'row 2 (bottom)'], ['D10', 'P1.15', 'R3', 'row 3 (thumbs)'],
+  ['D6', 'P1.11', 'LED1', `status LED 1 (${LEDS[0].label})`], ['D7', 'P1.12', 'LED2', `status LED 2 (${LEDS[1].label})`],
+  ['NFC1 pad', 'P0.09', 'LED3', `status LED 3 (${LEDS[2].label}), through-hole`], ['NFC2 pad', 'P0.10', 'LED4', `status LED 4 (${LEDS[3].label}), through-hole`],
+  ['BAT+ pad', '—', 'BAT_SW', 'from the power switch, through-hole'], ['BAT− pad', '—', 'GND', 'through-hole'],
+  ['GND', '—', 'GND', 'castellated pad'], ['5V, 3V3', '—', '—', 'unused'],
+];
 document.getElementById('elec').innerHTML = `
-<h2>Key matrix (both halves identical)</h2>
+<h2>Pin map (identical on both halves)</h2>
+<table><tr><th>XIAO pin</th><th>nRF52840</th><th>Net</th><th>Use</th></tr>
+${pinRows.map(r => `<tr><td><code>${r[0]}</code></td><td class="num">${r[1]}</td><td><code>${r[2]}</code></td><td>${r[3]}</td></tr>`).join('')}</table>
+<h2>Key matrix</h2>
 <table>
 <tr><th></th><th>C0 · D0<br>pinky</th><th>C1 · D1<br>ring</th><th>C2 · D2<br>middle</th><th>C3 · D3<br>index</th><th>C4 · D4<br>inner</th></tr>
 <tr><th>R0 · D5</th><td>top</td><td>top</td><td>top</td><td>top</td><td>top</td></tr>
@@ -212,94 +286,128 @@ document.getElementById('elec').innerHTML = `
 <tr><th>R2 · D9</th><td>bottom</td><td>bottom</td><td>bottom</td><td>bottom</td><td>bottom</td></tr>
 <tr><th>R3 · D10</th><td></td><td></td><td></td><td>inner thumb</td><td>outer thumb</td></tr>
 </table>
-<p>Diode direction is <b>col2row</b>: column → switch → 1N4148W anode → cathode (bar) → row. The diodes sit on the back, next to each hotswap socket.</p>
+<p>Diode direction is <b>col2row</b>: column → switch → 1N4148W anode → cathode (bar) → row. The columns are numbered pinky → inner on both halves (the right half is the same board), so the firmware's transform mirrors them.</p>
+<h2>Status LEDs</h2>
+<p>Four 0805 LEDs, each with a 0805 1 kΩ series resistor, in a row under the XIAO. Active high: <code>GPIO → 1 kΩ → LED anode → cathode → GND</code>, ≈1.2 mA each. Seen from above, the right half shows them in reverse order (LED4 on the left), because it's the same board flipped.</p>
+<table><tr><th>LED</th><th>Pin</th><th>Suggested colour</th></tr>
+${LEDS.map(l => `<tr><td>${l.name}</td><td><code>${l.pin}</code></td><td><span style="color:${l.col}">●</span> ${l.label}</td></tr>`).join('')}</table>
 <h2>Power path</h2>
 <p><code>LiPo + → JST-SH pin 1 → BAT_RAW → slide switch → BAT_SW → XIAO BAT+</code> &nbsp;·&nbsp; <code>LiPo − → GND → XIAO BAT−</code></p>
-<p>The XIAO handles charging (USB-C → BQ25101 → cell), the 3.3 V regulator and battery sensing (VBAT divider, reported per half by ZMK). There's no external reset button: double-tap the XIAO's own reset button for the UF2 bootloader.</p>
+<p>The XIAO handles charging (USB-C → BQ25101 → cell), the 3.3 V regulator and battery sensing (ZMK reports each half's level). There's no external reset button: double-tap the XIAO's own reset button to get the UF2 bootloader.</p>
 <h2>PCB</h2>
 <div class="kv">
-<div>Layers</div><div>2, FR-4, ${L.thickness} mm, 1 oz copper</div>
-<div>Board size</div><div>${fmt(cs[0]-2*(D.case.wall+D.case.clearance),0)} × ${fmt(cs[1]-2*(D.case.wall+D.case.clearance),0)} mm per half (two separate designs, left and right)</div>
-<div>Smallest features</div><div>0.15 mm tracks (0.2 mm typical), vias 0.6 mm pad / 0.3 mm drill, ≥0.5 mm copper-to-edge. All within JLCPCB's standard 2-layer process.</div>
-<div>Generated by</div><div>ergogen 4.2.1 → Freerouting 2.5 → GND pours on both layers → KiCad 9 DRC (0 errors, fully routed)</div>
+<div>Layers</div><div>2, FR-4, ${T} mm, 1 oz copper, GND pour on both layers</div>
+<div>Board size</div><div>${fmt(bw)} × ${fmt(bh)} mm, one reversible design for both halves</div>
+<div>Copper</div><div>${D.stats.tracks} track segments, ${D.stats.vias} vias, ${D.stats.footprints} footprints</div>
+<div>Smallest features</div><div>0.15 mm tracks (0.2 mm typical), vias 0.6 mm pad / 0.3 mm drill, ≥0.5 mm copper to edge. All within JLCPCB's standard 2-layer process.</div>
+<div>Generated by</div><div>ergogen 4.2.1 → Freerouting 2.5 → GND pours → KiCad ${D.drc.kicad} DRC</div>
 </div>
 <h2>Battery life (estimate)</h2>
-<p>ZMK on an nRF52840 with no LEDs or display typically averages a few hundred µA while you type and drops to µA-level in deep sleep. With 110 mAh, expect roughly <b>2–4 weeks</b> per charge on the left (central) half and longer on the right. It depends heavily on how much you type and on the sleep settings. If you need more, a 401230 (~150 mAh, 4 mm thick) also fits if <code>under_gap</code> grows by 1 mm.</p>`;
+<p>ZMK on an nRF52840 averages a few hundred µA while you type and drops to µA level in deep sleep. With 110 mAh, expect roughly <b>2–4 weeks</b> per charge on the left (central) half and longer on the right, if the LEDs only flash briefly. Each second an LED is on costs as much as several seconds of typing.</p>`;
 
-const p = D.case;
-document.getElementById('mech').innerHTML = `
-<h2>Stack-up (side section through the controller tab)</h2>
-<svg class="stack" viewBox="0 0 420 170" width="100%">
-  <rect x="30" y="135" width="360" height="${p.floor*8}" fill="#b9b1a3"/><text x="395" y="146">floor ${p.floor}</text>
-  <rect x="30" y="${135-p.under_gap*8}" width="12" height="${p.under_gap*8}" fill="#b9b1a3"/>
-  <rect x="378" y="${135-(p.under_gap+1.6+p.wall_above_pcb)*8}" width="12" height="${(p.under_gap+1.6+p.wall_above_pcb)*8}" fill="#b9b1a3"/>
-  <rect x="220" y="${135-D.dims.cell[2]*8}" width="140" height="${D.dims.cell[2]*8}" rx="3" fill="#b8bcc6"/><text x="250" y="128">LiPo ${D.dims.cell[2]} mm</text>
-  <rect x="70" y="${135-p.under_gap*8+0}" width="40" height="${D.dims.hotswap_h*8}" fill="#d9d4c7"/><text x="62" y="${135-p.under_gap*8+D.dims.hotswap_h*8+12}">socket ${D.dims.hotswap_h}</text>
-  <rect x="42" y="${135-p.under_gap*8-12.8}" width="336" height="12.8" fill="#2f6b3a"/><text x="44" y="${135-p.under_gap*8-16}">PCB 1.6</text>
-  <rect x="215" y="${135-p.under_gap*8-12.8-8}" width="142" height="8" fill="#2b4c8c"/><rect x="250" y="${135-p.under_gap*8-12.8-8-26}" width="70" height="26" fill="#2b4c8c"/><text x="325" y="${135-p.under_gap*8-12.8-26}">XIAO + USB-C</text>
-  <rect x="60" y="${135-p.under_gap*8-12.8-40}" width="110" height="40" fill="#3a3a3a"/><text x="80" y="${135-p.under_gap*8-12.8-44}">Choc Sunset + MBK</text>
-  <text x="10" y="12">all values mm · gap under PCB ${p.under_gap}</text>
-</svg>
-<h2>Case parameters</h2>
-<div class="kv">
-<div>Wall / floor</div><div>${p.wall} mm / ${p.floor} mm</div>
-<div>PCB to wall clearance</div><div>${p.clearance} mm per side</div>
-<div>Gap under PCB</div><div>${p.under_gap} mm (LiPo ${D.dims.cell[2]} + sockets ${D.dims.hotswap_h})</div>
-<div>Wall top above PCB</div><div>${p.wall_above_pcb} mm, so the Sweep's low profile survives</div>
-<div>PCB support</div><div>${p.ledge} mm perimeter ledge + 3 screw bosses Ø${p.boss_d}</div>
-<div>Battery bay</div><div>${p.fence_h} mm locating fence, ${p.fence_gap} mm clearance, open at the connector end</div>
-<div>Openings</div><div>USB-C (top of the tab), power-switch finger notch (outer edge of the tab)</div>
-</div>
-<h2>Printing (printer model not decided yet)</h2>
+const st = D.feet.standoffs, pf = D.feet.pads;
+const oxMin = Math.min(...B.outline.map(q => q[0])), oyMax = Math.max(...B.outline.map(q => q[1]));
+const where = q => `${fmt(q[0] - oxMin, 0)} mm from the pinky edge, ${fmt(oyMax - q[1], 0)} mm below the top`;
+document.getElementById('build').innerHTML = `
+<h2>Before you start</h2>
+<ul>
+<li>Pick two boards and decide which is <b>L</b> and which is <b>R</b> (Overview → Telling the halves apart). Write L / R on the socket face with a marker.</li>
+<li>Per half: 1 XIAO, 17 diodes, 17 hotswap sockets, 4 LEDs, 4 × 1 kΩ, 1 power switch, 1 JST-SH jack, 1 LiPo + JST-SH cable, Kapton tape, ~1 mm foam tape, feet.</li>
+<li>Flux, a fine tip and tweezers. The XIAO's castellations and the 0805s are easiest with a little paste or plenty of flux.</li>
+</ul>
+<h2>Soldering order (per half)</h2>
+<p class="muted">"Socket face" = ${Bk} on the left half, ${F} on the right. "Top face" = ${F} on the left, ${Bk} on the right. The order keeps the board flat on the bench as long as possible: low parts first, the hotswap sockets last.</p>
+<ol>
+<li><b>Diodes</b> (socket face, 17×). Match the cathode bar to the silk bar; the direction is the same on both halves.</li>
+<li><b>JST-SH jack</b> (socket face). Mouth toward the controller tab (where the cell goes). Solder the 2 mounting tabs, then the 2 pins.</li>
+<li><b>Kapton strip</b> (top face) over the 4 <b>unused</b> BAT/NFC holes under the XIAO (Compatibility → XIAO). The amber patches in the 3D view show where; hide the XIAO layer to see them.</li>
+<li><b>XIAO</b> (top face, components up, USB-C at the tab's top edge). Tin one corner pad, align, tack, then solder all 14 castellated pads. Turn the board over and <b>fill the 4 used holes</b> (BAT−, BAT+, NFC1, NFC2) from the socket face so the solder wets the XIAO's underside pads. Check for continuity.</li>
+<li><b>4 resistors + 4 LEDs</b> (top face, row under the XIAO). Resistors on the row nearer the XIAO; LED cathode (green mark / bar on the part) to the silk bar.</li>
+<li><b>Power switch</b> (top face), lever over the tab's outer edge.</li>
+<li><b>Flash and test on USB</b> (no battery yet). Short each key's socket contacts with tweezers, and check that the LEDs light.</li>
+<li><b>Hotswap sockets</b> (socket face, 17×). Push each socket flat, then solder both tabs.</li>
+<li><b>Battery</b>, then <b>feet</b> (below), then <b>switches and keycaps</b>.</li>
+</ol>
+<h2>Battery</h2>
+<ol>
+<li>Re-terminate the cell: cut off its JST PH plug and join the leads to a Pololu #5500 JST-SH cable, one lead at a time (solder + heat-shrink). Then check with a meter: <b>+ must go to JST-SH pin 1</b>, the pad marked + on the silk.</li>
+<li>Cover the board area under the tab (socket face) with <b>Kapton</b>: the XIAO's through-hole joints, the switch pegs and the unused pads all sit there.</li>
+<li>Stick the cell on with <b>~1 mm foam tape</b>, leads toward the JST jack, inside the tab outline (${DM.cell[0]} × ${DM.cell[1]} mm, ending ≈1.5 mm inside the tab's top edge). Leave room for the plug, fold the spare cable beside the cell and tape it down.</li>
+<li>Plug in, slide the switch ON (it also has to be ON for charging), and check that the XIAO's charge LED comes on over USB.</li>
+</ol>
+<h2>Feet</h2>
+<p>The socket face is crowded with sockets and switch posts, so a 10 mm foot only fits at a few places. The plan uses 6 feet per half, at the same board positions on both halves:</p>
 <table>
-<tr><th></th><th>Value</th></tr>
-<tr><td>Footprint per half</td><td class="num">${fmt(cs[0],1)} × ${fmt(cs[1],1)} × ${fmt(cs[2],1)} mm. Fits any bed from 120 × 100 mm up, including Bambu A1 mini, Prusa MINI and Ender 3</td></tr>
-<tr><td>Orientation</td><td>Flat, floor down, as exported (<code>case.stl</code>)</td></tr>
-<tr><td>Supports</td><td>None (largest overhang ${fmt(L.mesh.overhang,1)} mm²)</td></tr>
-<tr><td>Thinnest wall</td><td>${fmt(Math.min(L.mesh.wall_p01,R.mesh.wall_p01),2)} mm (3+ perimeters with a 0.4 mm nozzle)</td></tr>
-<tr><td>Reference slice</td><td>PrusaSlicer 2.5, PLA, 0.2 mm layers: ${D.slice.left.grams} g, ${D.slice.left.time} per half</td></tr>
-<tr><td>Material</td><td>PLA or PETG. Keep it off hot surfaces; the cell sits inside.</td></tr>
+<tr><th>#</th><th>Where</th><th>What</th></tr>
+${st.map((q, i) => `<tr><td>${i + 1}</td><td>M2 hole, ${where(q)}</td><td>M2 × 4 pan-head screw from the top face, M2 × ${DM.standoff[1]} mm hex standoff (F-F) underneath, 3M SJ5076 bumpon (Ø${DM.bumpon[0]} × ${DM.bumpon[1]} mm) on its end: ${fmt(stackH, 1)} mm</td></tr>`).join('')}
+${pf.map((q, i) => `<tr><td>${st.length + i + 1}</td><td>${where(q)}</td><td>adhesive rubber foot Ø${DM.foot[0]} × ${DM.foot[1]} mm on the bare board</td></tr>`).join('')}
 </table>
-<p class="muted">Files per half: <code>build/cad/&lt;side&gt;/case.stl</code> (print) and <code>case.step</code> (edit). Run <code>make case</code> to rebuild, re-check and re-slice them.</p>`;
+<p class="muted">On the right half, measure from the pinky edge too: the board is flipped, so "from the pinky edge" stays correct. The <b>Under</b> view shows all 6. Get feet in the 5.8–6 mm range so all 6 have the same height; a slight mismatch is absorbed by the rubber. The screw heads on the top face sit between switches, clear of the switch flanges.</p>
+<h2>Stack-up (side view under the tab)</h2>
+<svg class="stack" viewBox="0 0 420 154" width="100%">
+  <rect x="10" y="132" width="400" height="2" fill="#b9b1a3"/><text x="180" y="147">desk</text>
+  <rect x="30" y="${132 - footH * 10}" width="40" height="${footH * 10}" rx="4" fill="#3a3a3c"/><text x="24" y="147">foot ${footH}</text>
+  <rect x="345" y="${132 - DM.bumpon[1] * 10}" width="40" height="${DM.bumpon[1] * 10}" rx="4" fill="#3a3a3c"/>
+  <rect x="355" y="${132 - stackH * 10}" width="20" height="${DM.standoff[1] * 10}" fill="#d8c48a"/><text x="285" y="147">standoff ${DM.standoff[1]} + SJ5076 ${DM.bumpon[1]}</text>
+  <rect x="20" y="${132 - footH * 10 - T * 10}" width="380" height="${T * 10}" fill="#1f5a35"/><text x="75" y="${132 - footH * 10 - T * 10 - 4}">PCB ${T}</text>
+  <rect x="90" y="${132 - footH * 10}" width="50" height="${DM.socket_box[2] * 10}" fill="#222"/><text x="92" y="${132 - footH * 10 + DM.socket_box[2] * 10 + 11}">socket ${DM.socket_box[2]}</text>
+  <rect x="170" y="${132 - footH * 10}" width="140" height="${DM.cell_tape * 10}" fill="#e8e3d6"/>
+  <rect x="170" y="${132 - footH * 10 + DM.cell_tape * 10}" width="140" height="${DM.cell[2] * 10}" rx="3" fill="#b8bcc6"/><text x="190" y="${132 - footH * 10 + (DM.cell_tape + DM.cell[2]) * 10 - 10}">tape ${DM.cell_tape} + LiPo ${DM.cell[2]}</text>
+  <text x="200" y="128">≈${fmt(footH - DM.cell[2] - DM.cell_tape, 1)} mm air</text>
+  <text x="12" y="12">mm, to scale (1 mm = 10 px)</text>
+</svg>`;
 
 document.getElementById('bom').innerHTML = `
 <h2>Bill of materials (whole keyboard)</h2>
 <table>
-<tr><th>Qty</th><th>Part</th><th>Notes</th></tr>
-<tr><td class="num">2</td><td>PCB (left + right)</td><td><b>order:</b> JLCPCB, see below</td></tr>
-<tr><td class="num">2</td><td>Seeed Studio XIAO nRF52840</td><td><b>have.</b> Soldered flat, no headers or sockets.</td></tr>
-<tr><td class="num">34</td><td>Kailh Choc Sunset switches (Choc v1, tactile 40 gf)</td><td><b>have:</b> 40 from SplitKB (6 spare)</td></tr>
-<tr><td class="num">34</td><td>Kailh Choc hotswap sockets, black</td><td><b>have:</b> SplitKB pack. Make sure it holds at least 34.</td></tr>
-<tr><td class="num">34</td><td>Blank MBK Choc keycaps, 1u, white</td><td><b>have:</b> 40 from SplitKB (6 spare)</td></tr>
-<tr><td class="num">34</td><td>1N4148W diode, SOD-123</td><td><b>have:</b> 100 SMD diodes from SplitKB. Check the reel says SOD-123.</td></tr>
-<tr><td class="num">2</td><td>MSK12C02 side slide switch, SMD</td><td><b>have:</b> from the Wireless Controller Expansion Bundle</td></tr>
-<tr><td class="num">2</td><td>JST SH 2-pin SMD side-entry, SM02B-SRSS-TB</td><td><b>buy:</b> LCSC C160402. Check the stock and footprint before ordering. The JST PH jacks in your bundle are too tall to fit under the PCB.</td></tr>
-<tr><td class="num">2</td><td>LiPo 3.7 V 301230 (≈110 mAh) with PCM, JST SH 1.0 plug</td><td><b>buy:</b> max 12.5 × 31 × 3.1 mm. Check polarity</td></tr>
-<tr><td class="num">6</td><td>M2 × 6 pan or wafer head screw, self-tapping for plastic</td><td>or M2 × 5 machine screws with M2 heat-set inserts (set <code>pilot_d</code> to 3.2)</td></tr>
-<tr><td class="num">8</td><td>Rubber bumpons</td><td>optional</td></tr>
+<tr><th>Qty</th><th>Part</th><th></th><th>Notes</th></tr>
+<tr><td class="num">2</td><td>Seeed Studio XIAO nRF52840</td><td>${badge(true, 'have')}</td><td>Soldered flat, no headers</td></tr>
+<tr><td class="num">34</td><td>Kailh Choc Sunset switches (Choc v1, tactile 40 gf)</td><td>${badge(true, 'have')}</td><td>40 from SplitKB (6 spare)</td></tr>
+<tr><td class="num">34</td><td>Blank MBK Choc keycaps, 1u, white</td><td>${badge(true, 'have')}</td><td>40 from SplitKB</td></tr>
+<tr><td class="num">34</td><td>Kailh Choc hotswap sockets, black</td><td>${badge(true, 'have')}</td><td>Check the pack holds at least 34</td></tr>
+<tr><td class="num">34</td><td>1N4148W diode, SOD-123</td><td>${badge(true, 'have')}</td><td>SplitKB SMD diodes</td></tr>
+<tr><td class="num">2</td><td>MSK12C02 side slide switch</td><td>${badge(true, 'have')}</td><td>From the SplitKB Wireless Controller Expansion Bundle</td></tr>
+<tr><td class="num">5</td><td>PCB, one design (<code>sweep</code>)</td><td><span class="badge b-buy">buy</span></td><td><a href="https://jlcpcb.com/" target="_blank" rel="noopener">JLCPCB</a>, settings below. 5 boards = 2 keyboards + 1 spare.</td></tr>
+<tr><td class="num">2</td><td>JST SH 2-pin SMD side-entry, SM02B-SRSS-TB</td><td><span class="badge b-buy">buy</span></td><td><a href="https://www.lcsc.com/product-detail/C160402.html" target="_blank" rel="noopener">LCSC C160402</a> (buy a few spare)</td></tr>
+<tr><td class="num">2</td><td>LiPo 3.7 V 301230 (≈110 mAh) with PCM</td><td><span class="badge b-buy">buy</span></td><td><a href="https://ampul.eu/" target="_blank" rel="noopener">Ampul.eu</a> (search 301230). Ships with JST PH. Max ${DM.cell[0] + 0.5} × ${DM.cell[1] + 1} × ${DM.cell[2] + 0.1} mm.</td></tr>
+<tr><td class="num">2</td><td>JST-SH 2-pin single-ended cable</td><td><span class="badge b-buy">buy</span></td><td><a href="https://www.pololu.com/product/5500" target="_blank" rel="noopener">Pololu #5500</a>, to re-terminate the cells</td></tr>
+<tr><td class="num">8</td><td>0805 LED, Vf ≤ 2.2 V</td><td><span class="badge b-buy">buy</span></td><td>2 each of red, amber, yellow, green (any vendor)</td></tr>
+<tr><td class="num">8</td><td>0805 resistor 1 kΩ</td><td><span class="badge b-buy">buy</span></td><td>Any 1% / 5% thick film</td></tr>
+<tr><td class="num">6</td><td>M2 × ${DM.standoff[1]} mm hex standoff, female–female</td><td><span class="badge b-buy">buy</span></td><td>Nylon or brass; 3 per half</td></tr>
+<tr><td class="num">6</td><td>M2 × 4 pan-head screw</td><td><span class="badge b-buy">buy</span></td><td>Into the standoffs from the top face</td></tr>
+<tr><td class="num">6</td><td>3M Bumpon SJ5076 (Ø${DM.bumpon[0]} × ${DM.bumpon[1]} mm)</td><td><span class="badge b-buy">buy</span></td><td>On the standoff ends. Too short on its own (the cell needs ≈${fmt(DM.cell[2] + DM.cell_tape, 0)} mm).</td></tr>
+<tr><td class="num">6</td><td>Adhesive rubber foot Ø${DM.foot[0]} × ${DM.foot[1]} mm</td><td><span class="badge b-buy">buy</span></td><td>Cylindrical; 3 per half on the bare board. Any brand, 5.8–6 mm tall to match the standoff feet.</td></tr>
+<tr><td class="num">—</td><td>Kapton tape, ~1 mm double-sided foam tape</td><td><span class="badge b-buy">buy</span></td><td>XIAO hole masking + cell mounting</td></tr>
 </table>
-<p class="muted">Not used in this build: the Mill-Max low-profile sockets (the XIAO is soldered flat) and the JST PH jacks, plugs and crimps from the expansion bundle. Keep them for another board.</p>
+<p class="muted">Owned but not used here: the Mill-Max low-profile sockets (the XIAO is soldered flat) and the bundle's JST PH jacks and plugs (too tall under the board). Keep them for another build. The old case's M2 screws aren't needed.</p>
 <h2>JLCPCB order settings</h2>
 <div class="kv">
-<div>Files</div><div><code>make fab</code> → <code>build/fab/&lt;side&gt;-gerbers.zip</code> (one order per half)</div>
-<div>Layers / thickness</div><div>2 layers, 1.6 mm, FR-4</div>
-<div>Min hole / track</div><div>0.3 mm via drill / 0.15 mm track, standard capabilities (no surcharge)</div>
-<div>Surface finish</div><div>HASL or ENIG. ENIG is easier to hand-solder on the castellated XIAO pads.</div>
-<div>Size</div><div>about ${fmt(cs[0]-4.8,0)} × ${fmt(cs[1]-4.8,0)} mm, which is over the 100 × 100 mm lowest-price tier</div>
-<div>Assembly</div><div>Not required: everything is hand-solderable (SOD-123, SMD switch, JST-SH, castellated XIAO). If you want JLC to place the diodes, they're all on the back side.</div>
-</div>
-<h2>Build order</h2>
-<p>1. Diodes, JST socket, power switch → 2. XIAO: tack two corners, solder all 14 pads, then fill the two BAT through-holes from the back → 3. Hotswap sockets → 4. Flash both halves → 5. Plug in the cell, check polarity and power → 6. Screw the PCB into the case, add switches and caps.</p>`;
+<div>Files</div><div><code>make fab</code> → <code>build/fab/sweep-gerbers.zip</code>, uploaded once</div>
+<div>Different designs</div><div>1</div>
+<div>PCB qty</div><div><b>5</b> (2 per keyboard + 1 spare)</div>
+<div>Layers / material</div><div>2 layers, FR-4, 1.6 mm, 1 oz outer copper</div>
+<div>Dimensions</div><div>${fmt(bw)} × ${fmt(bh)} mm (detected from the gerbers). That's over 100 × 100 mm, so not the cheapest promo tier.</div>
+<div>Min track / hole</div><div>0.15 mm / 0.3 mm vias: standard capabilities, no surcharge</div>
+<div>Colour / silk</div><div>Any (green is fastest), white silk</div>
+<div>Surface finish</div><div>HASL lead-free or ENIG. ENIG is flatter and easier for the XIAO's castellations and the 0805s.</div>
+<div>Castellated holes / edge plating</div><div>No (the castellations are on the XIAO, not this board)</div>
+<div>Order number</div><div>JLC prints one on the board by default. Pick "remove" (small fee) if you mind, since both faces are visible on some half.</div>
+<div>Assembly</div><div>Not needed: everything is hand-solderable</div>
+</div>`;
 
 document.getElementById('fw').innerHTML = `
 <h2>ZMK</h2>
-<p>A ready-made shield is in <code>firmware/zmk-config/</code>: <code>sweep_xiao_left</code> (central) and <code>sweep_xiao_right</code>, a starter keymap (QWERTY with home-row mods, nav/num, symbols, a system/Bluetooth layer) and battery reporting for both halves.</p>
+<p>A shield is in <code>firmware/zmk-config/</code>: <code>sweep_xiao_left</code> (central) and <code>sweep_xiao_right</code> (peripheral), a starter keymap (QWERTY with home-row mods, nav/num, symbols, a system/Bluetooth layer) and battery reporting for both halves. Both halves run the same pin map because the board is the same.</p>
 <div class="kv">
-<div>Board</div><div><code>seeeduino_xiao_ble</code> (on ZMK built on Zephyr 4.1+: <code>xiao_ble//zmk</code>)</div>
-<div>kscan</div><div><code>zmk,kscan-gpio-matrix</code>, <code>col2row</code>, cols <code>&amp;xiao_d 0–4</code>, rows <code>&amp;xiao_d 5, 8, 9, 10</code></div>
-<div>Transform</div><div>10 × 4, right half <code>col-offset = &lt;5&gt;</code></div>
-<div>Flashing</div><div>Double-tap reset → <code>XIAO-SENSE</code> drive → copy the <code>.uf2</code></div>
-</div>`;
+<div>Board</div><div><code>seeeduino_xiao_ble</code> (ZMK on Zephyr 4.1+: <code>xiao_ble//zmk</code>)</div>
+<div>kscan</div><div><code>zmk,kscan-gpio-matrix</code>, <code>col2row</code>, cols <code>&amp;xiao_d 0–4</code>, rows <code>&amp;xiao_d 5, 8, 9, 10</code> (pull-down)</div>
+<div>Transform</div><div>10 × 4. The right half's columns are mirrored, <code>col-offset = &lt;5&gt;</code></div>
+<div>Status LEDs</div><div><code>gpio-leds</code> <code>status_led_1..4</code> on <code>&amp;xiao_d 6</code>, <code>&amp;xiao_d 7</code>, <code>&amp;gpio0 9</code>, <code>&amp;gpio0 10</code>, active high</div>
+<div>NFC pins</div><div><code>CONFIG_NFCT_PINS_AS_GPIOS=y</code> (Zephyr 4.x: <code>&amp;uicr { nfct-pins-as-gpios; }</code>)</div>
+<div>UART</div><div><code>&amp;uart0</code> disabled (D6/D7 drive LEDs)</div>
+<div>Flashing</div><div>Double-tap reset → <code>XIAO-SENSE</code> drive → copy the <code>.uf2</code> for that half</div>
+</div>
+<p class="muted">What the LEDs show (battery, BLE profile, connection) is defined in the firmware. The viewer's LED colours are only a suggestion.</p>`;
 
 for (const b of document.querySelectorAll('#tabs button')) b.onclick = () => {
   document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
@@ -308,7 +416,7 @@ for (const b of document.querySelectorAll('#tabs button')) b.onclick = () => {
 
 // ------------------------------------------------------------------ 3D
 const host = document.getElementById('viewer');
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 host.prepend(renderer.domElement);
@@ -319,18 +427,18 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8478, 1.6));
 const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(-120, -200, 300); scene.add(sun);
+const under = new THREE.DirectionalLight(0xffffff, 0.9); under.position.set(80, 120, -300); scene.add(under);
 const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(200, 150, 80); scene.add(fill);
 
-const loader = new STLLoader();
-const b2ab = s => { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
 const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.0, ...o });
+const box = (w, d, h, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, d, h), m); return o; };
+const cyl = (r, h, m, seg = 32) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), m); o.rotation.x = Math.PI / 2; return o; };
+// place an object at (x, y) on a face, rot degrees, with its base at height z0 above the face
+const at = (o, x, y, z0, h, deg = 0) => { o.position.set(x, y, z0 + h / 2); if (deg) o.rotation.z = THREE.MathUtils.degToRad(deg); return o; };
 
-const caseMat = mat('#b9b1a3', { roughness: 0.9 });
-const capMat = mat('#f6f5f1', { roughness: 0.55 });
-const groups = { case: [], pcb: [], sockets: [], switches: [], keycaps: [], mcu: [], parts: [], battery: [], keepouts: [] };
-const LAYERS = [['case', 'Case', true], ['keycaps', 'Keycaps', true], ['switches', 'Switches', true], ['pcb', 'PCB', true],
-  ['mcu', 'XIAO', true], ['battery', 'LiPo', true], ['sockets', 'Sockets', true], ['keepouts', 'Keep-outs', false]];
-const explodeZ = { case: 0, battery: 0.0, pcb: 16, sockets: 16, mcu: 16, parts: 16, keepouts: 16, switches: 28, keycaps: 44 };
+const xs = B.outline.map(q => q[0]), ys = B.outline.map(q => q[1]);
+const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+const cx = (minx + maxx) / 2, cy = (miny + maxy) / 2, GAP = 34;
 
 function shapeFrom(pts) {
   const s = new THREE.Shape(); s.moveTo(pts[0][0], pts[0][1]);
@@ -338,34 +446,50 @@ function shapeFrom(pts) {
   return s;
 }
 
-function pcbTexture(side, layer) {
-  const xs = side.outline.map(q => q[0]), ys = side.outline.map(q => q[1]);
-  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+function pcbTexture(layer) {
   const k = 14, W = Math.ceil((maxx - minx) * k), H = Math.ceil((maxy - miny) * k);
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
   const X = x => (x - minx) * k, Y = y => (maxy - y) * k;
-  g.fillStyle = layer === 'F' ? '#1f5a35' : '#1c5231'; g.fillRect(0, 0, W, H);
-  g.strokeStyle = layer === 'F' ? '#2f7a4a' : '#2a7044'; g.lineCap = 'round';
-  for (const [x1, y1, x2, y2, w, ly] of side.tracks) {
-    if (ly !== layer + '.Cu') continue;
+  const cu = layer + '.Cu';
+  g.fillStyle = '#1f5a35'; g.fillRect(0, 0, W, H);
+  g.strokeStyle = '#2f7a4a'; g.lineCap = 'round';
+  for (const [x1, y1, x2, y2, w, ly] of B.tracks) {
+    if (ly !== cu) continue;
     g.lineWidth = w * k; g.beginPath(); g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); g.stroke();
   }
   g.fillStyle = '#d6b25e';
-  for (const [x, y, d] of side.vias) { g.beginPath(); g.arc(X(x), Y(y), d / 2 * k, 0, 7); g.fill(); }
-  for (const pd of side.pads) {
-    if (!pd.l.includes(layer + '.Cu')) continue;
+  for (const [x, y, d] of B.vias) { g.beginPath(); g.arc(X(x), Y(y), d / 2 * k, 0, 7); g.fill(); }
+  for (const pd of B.pads) {
+    if (!pd.l.includes(cu)) continue;
     g.beginPath(); pd.p.forEach((q, i) => i ? g.lineTo(X(q[0]), Y(q[1])) : g.moveTo(X(q[0]), Y(q[1]))); g.closePath(); g.fill();
   }
   g.fillStyle = '#16181a';
-  for (const [x, y, d] of [...side.holes, ...side.vias.map(v => [v[0], v[1], v[3]])]) { g.beginPath(); g.arc(X(x), Y(y), d / 2 * k, 0, 7); g.fill(); }
-  g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 0.15 * k; g.fillStyle = 'rgba(255,255,255,0.9)';
-  g.font = `${2.2 * k}px sans-serif`; g.textAlign = 'center';
-  for (const f of side.fps) {
-    if (layer === 'F' && f.name.startsWith('XIAO')) { g.strokeRect(X(f.x - 8.9), Y(f.y + 10.43), 17.8 * k, 20.9 * k); }
-    if (layer === 'B' && f.name.startsWith('JST')) { g.font = `${1.8 * k}px sans-serif`; g.save(); g.translate(X(f.x), Y(f.y - 3.6)); g.scale(-1, 1); g.fillText('BATT  + −', 0, 0); g.restore(); }
+  for (const [x, y, d] of [...B.holes, ...B.vias.map(v => [v[0], v[1], v[3]]), ...B.pth.map(p => [p[0], p[1], 0.8])]) {
+    g.beginPath(); g.arc(X(x), Y(y), d / 2 * k, 0, 7); g.fill();
   }
-  if (layer === 'F') { g.font = `bold ${3 * k}px sans-serif`; }
+  // a little silk, drawn so it reads correctly from its own face (B is seen mirrored)
+  g.strokeStyle = 'rgba(255,255,255,0.85)'; g.lineWidth = 0.15 * k; g.fillStyle = 'rgba(255,255,255,0.92)';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  const text = (s, x, y, size, bold = '') => {
+    g.font = `${bold} ${size * k}px sans-serif`; g.save(); g.translate(X(x), Y(y));
+    if (layer === 'B') g.scale(-1, 1); g.fillText(s, 0, 0); g.restore();
+  };
+  const xi = D.xiao;
+  g.strokeRect(X(xi.x - 8.89), Y(xi.y + 10.43), 17.78 * k, 20.91 * k);
+  text('USB-C', xi.x, xi.y + 8.3, 0.9);
+  for (const l of D.leds) { g.beginPath(); g.moveTo(X(l.x - 1.95), Y(l.y - 0.85)); g.lineTo(X(l.x - 1.95), Y(l.y - 2.35)); g.stroke(); }
+  for (const d of D.diodes) {
+    const ux = d.k[0] - d.x, uy = d.k[1] - d.y, n = Math.hypot(ux, uy) || 1;
+    g.lineWidth = 0.3 * k; g.beginPath();
+    const bx = d.x + ux / n * 0.2, by = d.y + uy / n * 0.2;
+    g.moveTo(X(bx - uy / n * 0.7), Y(by + ux / n * 0.7)); g.lineTo(X(bx + uy / n * 0.7), Y(by - ux / n * 0.7)); g.stroke();
+  }
+  for (const pd of B.pads) {
+    if (pd.ref !== 'J1' || !pd.l.includes(cu) || !pd.net) continue;
+    text(pd.net === 'BAT_RAW' ? '+' : '−', pd.x, pd.y - 1.6, 1.4, 'bold');
+  }
+  text('BATT', D.jst.x, D.jst.y - 3.6, 1.1);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   t.repeat.set(1 / (maxx - minx), 1 / (maxy - miny)); t.offset.set(-minx / (maxx - minx), -miny / (maxy - miny));
   return t;
@@ -377,77 +501,213 @@ function roundedRect(w, h, r) {
   s.quadraticCurveTo(x + w, y + h, x + w - r, y + h); s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r);
   s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s;
 }
+function glowTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.25, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
+}
+function labelSprite(txt, sub) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+  g.textAlign = 'center'; g.fillStyle = '#1d1d1f'; g.font = 'bold 52px -apple-system, Segoe UI, sans-serif'; g.fillText(txt, 256, 58);
+  g.fillStyle = '#6b6b70'; g.font = '30px -apple-system, Segoe UI, sans-serif'; g.fillText(sub, 256, 104);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
+  s.scale.set(48, 12, 1); s.renderOrder = 10; return s;
+}
+
+// shared geometry + materials (both halves are the same board)
+const shape = shapeFrom(B.outline);
+const pcbBodyGeo = new THREE.ExtrudeGeometry(shape, { depth: T - 0.04, bevelEnabled: false });
+const pcbFaceGeo = new THREE.ShapeGeometry(shape);
+const pcbBodyMat = mat('#1d4f30');
+const faceMat = { F: mat('#ffffff', { map: pcbTexture('F'), roughness: 0.55 }),
+                  B: mat('#ffffff', { map: pcbTexture('B'), roughness: 0.55, side: THREE.BackSide }) };
+const capMat = mat('#f6f5f1', { roughness: 0.55 });
 const capGeo = new THREE.ExtrudeGeometry(roundedRect(16.3, 15.3, 1.6), { depth: 2.2, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6, bevelSegments: 3, curveSegments: 6 });
 const housingGeo = new THREE.BoxGeometry(13.8, 13.8, 2.2), flangeGeo = new THREE.BoxGeometry(15, 15, 0.8), topGeo = new THREE.BoxGeometry(13.8, 13.8, 2.0), stemGeo = new THREE.BoxGeometry(5.4, 3.0, 1.4);
 // Kailh Choc Sunset: black bottom housing, translucent orange top, orange stem
 const housingMat = mat('#1f1f21'), topMat = mat('#f08a3c', { transparent: true, opacity: 0.78, roughness: 0.3 }), stemMat = mat('#e8661f');
+const black = mat('#1a1a1c', { roughness: 0.6 }), metal = mat('#d4d4d8', { metalness: 0.25, roughness: 0.35 }), tin = mat('#c4c4c8', { metalness: 0.25, roughness: 0.4 });
+const xiaoMat = mat('#2b4c8c', { roughness: 0.6 }), jstMat = mat('#f2efe6', { roughness: 0.7 }), cellMat = mat('#b8bcc6', { metalness: 0.45, roughness: 0.4 });
+const kaptonMat = mat('#e0a040', { transparent: true, opacity: 0.75, roughness: 0.3 }), foamMat = mat('#ece8dc', { roughness: 0.95 });
+const rubberMat = mat('#3a3a3c', { roughness: 0.9 }), standoffMat = mat('#d8c48a', { metalness: 0.6, roughness: 0.35 });
+const resMat = mat('#202022'), wireR = mat('#c62828'), wireK = mat('#222');
+const glowTex = glowTexture();
+const ledMats = LEDS.map(l => mat(new THREE.Color(l.col).lerp(new THREE.Color('#ffffff'), 0.55), { roughness: 0.25, transparent: true, opacity: 0.92, emissive: new THREE.Color(l.col), emissiveIntensity: 0 }));
+const ledFx = LEDS.map(() => []);   // per LED: halo sprites + point lights of both halves
 
-const halves = {};
-function buildSide(name, side, dx) {
-  const root = new THREE.Group(); root.position.x = dx; scene.add(root);
-  const add = (grp, obj) => { const g = new THREE.Group(); g.add(obj); g.userData.grp = grp; root.add(g); groups[grp].push(g); return obj; };
-  const zb = side.pcb_bottom_z, t = side.thickness, zt = zb + t;
-  const caseGeo = loader.parse(b2ab(side.case_stl)); caseGeo.computeVertexNormals();
-  add('case', new THREE.Mesh(caseGeo, caseMat));
-  for (const part of side.parts) {
-    const geo = loader.parse(b2ab(part.stl)); geo.computeVertexNormals();
-    const m = part.group === 'keepouts' ? mat(part.color, { transparent: true, opacity: 0.35, depthWrite: false }) : mat(part.color, part.group === 'battery' ? { metalness: 0.4, roughness: 0.4 } : {});
-    add(part.group, new THREE.Mesh(geo, m));
-  }
-  const shape = shapeFrom(side.outline);
-  const body = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: t - 0.04, bevelEnabled: false }), mat('#1d4f30'));
-  body.position.z = zb + 0.02;
-  const pg = add('pcb', body);
-  const top = new THREE.Mesh(new THREE.ShapeGeometry(shape), mat('#ffffff', { map: pcbTexture(side, 'F'), roughness: 0.55 })); top.position.z = t - 0.01; pg.add(top);
-  const bot = new THREE.Mesh(new THREE.ShapeGeometry(shape), mat('#ffffff', { map: pcbTexture(side, 'B'), roughness: 0.55, side: THREE.BackSide })); bot.position.z = -0.03; pg.add(bot);
-  const sw = new THREE.Group(), caps = new THREE.Group();
-  for (const [x, y, r] of side.keys) {
-    const k = new THREE.Group(); k.position.set(x, y, zt); k.rotation.z = THREE.MathUtils.degToRad(r);
+const groups = { keycaps: [], switches: [], pcb: [], mcu: [], kapton: [], leds: [], sockets: [], battery: [], feet: [], labels: [] };
+const EXPLODE = { keycaps: 30, switches: 14, mcu: 8, kapton: 3, leds: 5, sockets: 8, battery: 16, feet: 28 };
+const LAYERS = [['keycaps', 'Keycaps', true], ['switches', 'Switches', true], ['pcb', 'PCB', true], ['mcu', 'XIAO', true],
+  ['leds', 'LEDs/switch', true], ['sockets', 'Sockets/diodes', true], ['battery', 'LiPo/JST', true], ['feet', 'Feet', true], ['labels', 'Labels', true]];
+
+const halves = {}, keyRefs = new Set(D.keys.map(k => k.ref));
+function buildHalf(name, up) {           // up: the face that points up for this half
+  const down = up === 'F' ? 'B' : 'F';
+  const outer = new THREE.Group(); scene.add(outer);
+  outer.position.x = (name === 'left' ? -1 : 1) * ((maxx - minx) / 2 + GAP / 2);
+  if (up === 'B') { outer.rotation.y = Math.PI; outer.position.z = T; }   // flip the board over
+  const inner = new THREE.Group(); inner.position.set(-cx, -cy, 0); outer.add(inner);
+  // a face group: +z points away from the board on that face
+  const face = s => { const g = new THREE.Group(); g.position.z = s === 'F' ? T : 0; g.scale.z = s === 'F' ? 1 : -1; inner.add(g); return g; };
+  const top = face(up), bot = face(down);
+  const add = (parent, grp) => { const g = new THREE.Group(); parent.add(g); g.userData.grp = grp; groups[grp].push(g); return g; };
+
+  // PCB: F texture on F, B texture on B (seen from below it reads mirrored, like the real board)
+  const pcb = add(inner, 'pcb');
+  const body = new THREE.Mesh(pcbBodyGeo, pcbBodyMat); body.position.z = 0.02; pcb.add(body);
+  const fF = new THREE.Mesh(pcbFaceGeo, faceMat.F); fF.position.z = T + 0.01; pcb.add(fF);
+  const fB = new THREE.Mesh(pcbFaceGeo, faceMat.B); fB.position.z = -0.01; pcb.add(fB);
+
+  // switches + caps (top face)
+  const sw = add(top, 'switches'), caps = add(top, 'keycaps');
+  for (const kk of D.keys) {
+    const k = new THREE.Group(); k.position.set(kk.x, kk.y, 0); k.rotation.z = THREE.MathUtils.degToRad(kk.r);
     const a = new THREE.Mesh(housingGeo, housingMat); a.position.z = 1.1; k.add(a);
     const b = new THREE.Mesh(flangeGeo, topMat); b.position.z = 2.6; k.add(b);
     const c = new THREE.Mesh(topGeo, topMat); c.position.z = 4.0; k.add(c);
     const s = new THREE.Mesh(stemGeo, stemMat); s.position.z = 5.6; k.add(s);
     sw.add(k);
-    const cap = new THREE.Mesh(capGeo, capMat); cap.position.set(x, y, zt + 6.4); cap.rotation.z = THREE.MathUtils.degToRad(r); caps.add(cap);
+    const cap = new THREE.Mesh(capGeo, capMat); cap.position.set(kk.x, kk.y, 6.4); cap.rotation.z = THREE.MathUtils.degToRad(kk.r); caps.add(cap);
   }
-  add('switches', sw); add('keycaps', caps);
-  halves[name] = root;
+  // hotswap sockets + diodes (socket face)
+  const so = add(bot, 'sockets');
+  const [sw_, sd_, sh_] = DM.socket_box;
+  for (const kk of D.keys) {
+    for (const [x, y, w, h, r] of kk.sock[down]) so.add(at(box(w, h, sh_, black), x, y, 0, sh_, r));
+  }
+  for (const pd of B.pads) {             // socket metal tabs
+    if (!keyRefs.has(pd.ref) || pd.l.length !== 1 || pd.l[0] !== down + '.Cu') continue;
+    so.add(at(box(1.4, 1.8, 0.3, tin), pd.x, pd.y, 0, 0.3));
+  }
+  const [dw, dd, dh] = DM.sod123;
+  for (const d of D.diodes) {
+    so.add(at(box(dw, dd, dh, black), d.x, d.y, 0, dh, d.r));
+    const bx = d.x + (d.k[0] - d.x) * 0.5, by = d.y + (d.k[1] - d.y) * 0.5;
+    so.add(at(box(0.45, dd + 0.02, dh + 0.02, mat('#d8d8d8')), bx, by, 0, dh + 0.02, d.r));
+    for (const s of [-1, 1]) {
+      const lx = d.x + (d.k[0] - d.x) * s * 0.95, ly = d.y + (d.k[1] - d.y) * s * 0.95;
+      so.add(at(box(0.9, 0.8, 0.25, tin), lx, ly, 0, 0.25, d.r));
+    }
+  }
+  // XIAO (top face): PCB, shield can, USB-C
+  const xi = D.xiao, [xw, xl, xt] = DM.xiao, [uw, ul, uh] = DM.xiao_usb, oh = DM.xiao_usb_overhang;
+  const mcu = add(top, 'mcu');
+  const xg = new THREE.Group(); xg.position.set(xi.x, xi.y, 0); xg.rotation.z = THREE.MathUtils.degToRad(xi.rot); mcu.add(xg);
+  xg.add(at(box(xw, xl, xt, xiaoMat), 0, -0.025, 0.08, xt));
+  xg.add(at(box(xw - 1.6, xl - ul - 1.0, DM.xiao_can, metal), 0, -(ul + 0.5) / 2, 0.08 + xt, DM.xiao_can));
+  xg.add(at(box(uw, ul, uh, metal), 0, xl / 2 + oh - ul / 2, 0.08 + xt, uh));
+  for (const s of [-1, 1]) for (let i = 0; i < 7; i++) xg.add(at(box(1.0, 1.2, xt + 0.06, tin), s * 8.6, -7.62 + 2.54 * i, 0.0, xt + 0.06));
+  xg.add(at(box(1.2, 0.6, 0.5, mat('#e8e8e8')), -5.5, xl / 2 - 9.3, 0.08 + xt, 0.5));   // reset button
+  // Kapton strips over the 4 unused (mirrored) BAT/NFC holes under the XIAO on this face
+  // (the XIAO on F uses BAT at x-4.445 and NFC at x+3.81/+5.715; the unused set is the mirror)
+  const kap = add(top, 'kapton'), m = up === 'F' ? 1 : -1;
+  kap.add(at(box(2.6, 4.2, 0.06, kaptonMat), xi.x + m * 4.445, xi.y + 1.27, 0, 0.06));
+  kap.add(at(box(4.4, 2.6, 0.06, kaptonMat), xi.x - m * 4.76, xi.y - 9.2075, 0, 0.06));
+  // LEDs + resistors + power switch (top face)
+  const ld = add(top, 'leds');
+  const [lw, ll, lh] = DM.led;
+  D.leds.forEach((l, i) => {
+    const idx = Math.max(0, LEDS.findIndex(q => q.name === l.ref));
+    ld.add(at(box(lw, ll, 0.5, resMat), l.x, l.y + 1.6, 0, 0.5, l.r));
+    for (const s of [-1, 1]) ld.add(at(box(0.4, ll + 0.02, 0.52, tin), l.x + s * 0.8, l.y + 1.6, 0, 0.52, l.r));
+    ld.add(at(box(lw, ll, lh, ledMats[idx]), l.x, l.y - 1.6, 0, lh, l.r));
+    ld.add(at(box(0.25, ll + 0.02, lh * 0.6, mat('#2a8a3a')), l.x - 0.85, l.y - 1.6, 0, lh * 0.6, l.r));   // cathode mark
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: LEDS[idx].col, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    halo.position.set(l.x, l.y - 1.6, lh + 0.6); halo.scale.set(9, 9, 1); halo.visible = false; ld.add(halo);
+    const light = new THREE.PointLight(LEDS[idx].col, 0, 30, 1.6); light.position.set(l.x, l.y - 1.6, lh + 1.5); ld.add(light);
+    ledFx[idx].push({ halo, light });
+  });
+  const p = D.pwr, [pw, pd_, ph] = DM.pwr_body, [vw, vp, vh] = DM.pwr_lever;
+  const pg = new THREE.Group(); pg.position.set(p.x, p.y, 0); pg.rotation.z = Math.atan2(p.lever[1], p.lever[0]) - Math.PI / 2; ld.add(pg);
+  pg.add(at(box(pw, pd_, ph, metal), 0, 1.35 - pd_ / 2, 0, ph));
+  pg.add(at(box(vw, vp, vh, black), 0, 1.35 + vp / 2, 0.05, vh));
+  // battery: JST jack + plug + leads, Kapton + foam tape, cell (socket face)
+  const bat = add(bot, 'battery'), j = D.jst, [jw, jd, jh] = DM.jst;
+  const jg = new THREE.Group(); jg.position.set(j.x, j.y, 0); jg.rotation.z = Math.atan2(j.mouth[1], j.mouth[0]) - Math.PI / 2; bat.add(jg);
+  jg.add(at(box(jw, jd, jh, jstMat), 0, 0, 0, jh));
+  jg.add(at(box(4.2, 2.6, 2.2, mat('#f7f5ee')), 0, jd / 2 + 0.9, 0.35, 2.2));     // mated plug
+  const [x0, y0, x1, y1] = D.cell, [cw, cl, ct] = DM.cell, tape = DM.cell_tape;
+  const ccx = (x0 + x1) / 2, ccy = (y0 + y1) / 2;
+  bat.add(at(box(cw + 2.5, cl + 2, 0.06, kaptonMat), ccx, ccy, 0, 0.06));
+  bat.add(at(box(cw - 2, cl - 6, tape - 0.06, foamMat), ccx, ccy, 0.06, tape - 0.06));
+  const cell = new THREE.Mesh(new THREE.ExtrudeGeometry(roundedRect(cw, cl, 1.0), { depth: ct - 0.4, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.2, bevelSegments: 2 }), cellMat);
+  cell.position.set(ccx, ccy, tape + 0.2); bat.add(cell);
+  bat.add(at(box(cw - 1, 3.0, ct - 0.6, mat('#2c6fb3')), ccx, y0 + 1.6, tape + 0.3, ct - 0.6));   // PCM end (taped)
+  for (const [dx, wm] of [[-0.6, wireR], [0.6, wireK]]) {
+    const pts = [new THREE.Vector3(j.x + dx, j.y + jd / 2 + 2.3, 1.4), new THREE.Vector3(j.x + dx + 3.5, j.y + jd / 2 + 3.4, 2.4),
+                 new THREE.Vector3(ccx + dx * 2 + 1, y0 - 0.4, tape + ct / 2), new THREE.Vector3(ccx + dx * 2, y0 + 0.5, tape + ct / 2)];
+    bat.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.35, 6), wm));
+  }
+  // feet (socket face): standoff + bumpon at the M2 holes, adhesive feet on the bare board
+  const ft = add(bot, 'feet');
+  const [sof, sol] = DM.standoff, [bd, bhh] = DM.bumpon, [fd, fh] = DM.foot;
+  for (const [x, y] of D.feet.standoffs) {
+    ft.add(at(cyl(sof / Math.sqrt(3), sol, standoffMat, 6), x, y, 0, sol));
+    ft.add(at(cyl(bd / 2, bhh, rubberMat), x, y, sol, bhh));
+    const head = at(cyl(1.9, 1.3, metal, 24), x, y, 0, 1.3); top.add(head); groups.feet.push(head); head.userData.fixed = true;
+  }
+  for (const [x, y] of D.feet.pads) {
+    const f = new THREE.Mesh(new THREE.CylinderGeometry(fd / 2 - 0.6, fd / 2, fh, 40), rubberMat);
+    f.rotation.x = -Math.PI / 2; f.position.set(x, y, fh / 2); ft.add(f);
+  }
+  // label (in the scene, so it never renders mirrored)
+  const lab = labelSprite(name === 'left' ? 'LEFT' : 'RIGHT', name === 'left' ? 'face F up · board as-is' : 'same board, flipped · face B up');
+  lab.position.set(outer.position.x, (maxy - miny) / 2 + 12, 4); scene.add(lab); groups.labels.push(lab);
+  halves[name] = { root: outer, label: lab };
 }
-buildSide('left', L, 0);
-const lxMax = Math.max(...L.outline.map(q => q[0])), rxMin = Math.min(...R.outline.map(q => q[0]));
-buildSide('right', R, lxMax - rxMin + 45);
+buildHalf('left', 'F');
+buildHalf('right', 'B');
 document.getElementById('loading').remove();
 
 // layer toggles
 const tg = document.getElementById('toggles');
 for (const [key, label, on] of LAYERS) {
   const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}> ${label}`;
-  const cb = l.querySelector('input'); const apply = () => groups[key].forEach(g => g.visible = cb.checked);
-  cb.onchange = () => { apply(); if (key === 'pcb') groups.parts.forEach(g => g.visible = cb.checked); };
-  apply(); tg.appendChild(l);
+  const cb = l.querySelector('input');
+  cb.onchange = () => groups[key].forEach(g => g.visible = cb.checked);
+  cb.onchange(); tg.appendChild(l);
 }
+// LEDs
+const lb = document.getElementById('ledBox'), ledOn = LEDS.map(() => false), ledBtns = [];
+function setLed(i, on) {
+  ledOn[i] = on; ledMats[i].emissiveIntensity = on ? 1.6 : 0;
+  for (const fx of ledFx[i]) { fx.halo.visible = on; fx.light.intensity = on ? 180 : 0; }
+  ledBtns[i].classList.toggle('on', on);
+}
+LEDS.forEach((l, i) => {
+  const b = document.createElement('button'); b.className = 'led'; b.style.setProperty('--c', l.col);
+  b.innerHTML = `<i></i>${i + 1}`; b.title = `${l.name} · ${l.pin} · ${l.label}`; b.setAttribute('aria-label', `${l.name} (${l.pin})`);
+  b.onclick = () => setLed(i, !ledOn[i]); lb.appendChild(b); ledBtns.push(b);
+});
+const allB = document.createElement('button'); allB.className = 'seg'; allB.textContent = 'All';
+allB.onclick = () => { const on = !ledOn.every(Boolean); LEDS.forEach((_, i) => setLed(i, on)); }; lb.appendChild(allB);
 // explode
 const ex = document.getElementById('explode');
-ex.oninput = () => { const e = +ex.value; for (const [k, arr] of Object.entries(groups)) arr.forEach(g => g.position.z = (explodeZ[k] || 0) * e); };
-// colours
-function swatches(id, list, target) {
-  const host = document.getElementById(id);
-  list.forEach((c, i) => { const b = document.createElement('button'); b.className = 'swatch' + (i ? '' : ' on'); b.style.background = c; b.title = c;
-    b.onclick = () => { target.color.set(c); host.querySelectorAll('.swatch').forEach(x => x.classList.toggle('on', x === b)); }; host.appendChild(b); });
-}
-swatches('caseSw', ['#b9b1a3', '#2e2f33', '#f1efe9', '#8fa38b', '#b7c7dc'], caseMat);
-swatches('capSw', ['#f6f5f1', '#2b2b2e', '#c9c3b6', '#d98f4e', '#9fb7c9'], capMat);
+ex.oninput = () => {
+  const e = +ex.value;
+  for (const [k, arr] of Object.entries(groups)) arr.forEach(g => { if (!g.userData.fixed && k !== 'labels' && k !== 'pcb') g.position.z = (EXPLODE[k] || 0) * e; });
+};
+// keycap colours
+const capHost = document.getElementById('capSw');
+['#f6f5f1', '#2b2b2e', '#c9c3b6', '#d98f4e', '#9fb7c9'].forEach((c, i) => {
+  const b = document.createElement('button'); b.className = 'swatch' + (i ? '' : ' on'); b.style.background = c; b.title = c; b.setAttribute('aria-label', `keycap colour ${c}`);
+  b.onclick = () => { capMat.color.set(c); capHost.querySelectorAll('.swatch').forEach(x => x.classList.toggle('on', x === b)); }; capHost.appendChild(b);
+});
 
 // framing / views
-let bounds = new THREE.Box3();
 function frame(view) {
-  bounds = new THREE.Box3();
-  for (const h of Object.values(halves)) if (h.visible) bounds.expandByObject(h);
+  const bounds = new THREE.Box3();
+  for (const h of Object.values(halves)) if (h.root.visible) bounds.expandByObject(h.root);
   const c = bounds.getCenter(new THREE.Vector3()), s = bounds.getSize(new THREE.Vector3());
-  const r = Math.max(s.x, s.y) * 0.5, dist = r / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (camera.aspect < 1.15 ? 1.3 / Math.min(camera.aspect, 1) : 1.0);
+  const r = Math.max(s.x / Math.max(camera.aspect, 0.3), s.y * 1.3) * 0.5 * 1.08 + 6;   // room for the toolbars
+  const dist = r / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (view === 'iso' ? 1.05 : 1.0);
   const dirs = { iso: [0.0, -1.0, 0.95], top: [0, -0.0001, 1], bottom: [0, 0.0001, -1], side: [0, -1, 0.12] };
   const d = new THREE.Vector3(...dirs[view]).normalize();
-  camera.up.set(0, view === 'top' || view === 'bottom' ? 1 : 0, view === 'top' || view === 'bottom' ? 0 : 1);
+  const flat = view === 'top' || view === 'bottom';
+  if (flat) c.y += s.y * 0.07; else c.z += s.y * 0.05;   // nudge the model below the top toolbar
+  camera.up.set(0, flat ? 1 : 0, flat ? 0 : 1);
   camera.position.copy(c).addScaledVector(d, dist);
   controls.target.copy(c); controls.update();
 }
@@ -456,19 +716,20 @@ function seg(boxId, attr, fn) {
   const btns = document.querySelectorAll(`#${boxId} button`);
   btns.forEach(b => b.onclick = () => { btns.forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset[attr]); });
 }
-seg('halfBox', 'half', h => { halves.left.visible = h !== 'right'; halves.right.visible = h !== 'left'; frame(curView); });
-const caseCb = [...document.querySelectorAll('#toggles label')].find(l => l.textContent.trim() === 'Case').querySelector('input');
-seg('viewBox', 'view', v => {
-  curView = v;
-  if ((v === 'bottom') === caseCb.checked) { caseCb.checked = v !== 'bottom'; caseCb.onchange(); }  // see the bay from below
-  frame(v);
+seg('halfBox', 'half', h => {
+  for (const [n, o] of Object.entries(halves)) { o.root.visible = h === 'both' || h === n; o.label.visible = o.root.visible && labelsOn(); }
+  frame(curView);
 });
+const labelsCb = [...tg.querySelectorAll('label')].find(l => l.textContent.trim() === 'Labels').querySelector('input');
+const labelsOn = () => labelsCb.checked;
+labelsCb.onchange = () => { for (const o of Object.values(halves)) o.label.visible = labelsCb.checked && o.root.visible; };
+seg('viewBox', 'view', v => { curView = v; frame(v); });
 
 function resize() {
   const w = host.clientWidth, h = host.clientHeight; renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
-new ResizeObserver(() => { resize(); }).observe(host);
+new ResizeObserver(() => { resize(); frame(curView); }).observe(host);
 resize(); frame('iso');
 renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
 </script>

@@ -1,7 +1,7 @@
 {
   "name": "sweep-keyboard",
   "version": "1.0.0",
-  "description": "Sweep-style split keyboard: ergogen layout, KiCad PCBs, build123d case",
+  "description": "Sweep-style split keyboard: ergogen layout, one reversible KiCad PCB, interactive viewer",
   "scripts": {
     "ergogen": "ergogen ergogen -o build/ergogen --debug"
   },
