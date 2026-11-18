@@ -97,6 +97,14 @@ Look at after changes:
 - Freerouting does not know KiCad's copper-to-edge clearance (0.5 mm); `specctra.py export` adds a
   temporary keep-out ring along Edge.Cuts to the DSN (0.9 mm — narrower rings were not fully
   respected). The GND pour uses solid pad connections (edge pads starve thermal spokes).
+- `add_zones.py` also adds the `antenna_no_pour` rule area (both layers, no copper pour, tracks
+  allowed) under the last 5 mm of the XIAO and 3 mm beyond its antenna end. The 30 mm cell still
+  lies under the whole XIAO; a shorter cell is the only way to clear the antenna.
+- Mounting holes H2/H3 sit 0.8/0.9 mm off the Sweep 2.2 positions so a 4 mm hex standoff clears
+  the neighbouring socket pads (>= 2.75 mm hole centre to pad copper on both faces).
+- Power switch: the battery pad is at the same board position on both faces (pin 1 on F, pin 3
+  on B), so ON is the same lever direction on both halves. JST-SH pads follow KiCad's
+  `JST_SH_SM02B-SRSS-TB_1x02-1MP` (anchor tabs at +-1.8 mm, 3.875 mm from the pin row).
 - `make pcb-strict` must pass before fab. Routed board lives in `pcb/sweep.kicad_pcb`.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.
 

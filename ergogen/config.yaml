@@ -317,12 +317,12 @@ pcbs:
         what: mounting_hole
         where: matrix_pinky_bottom
         adjust:
-          shift: [7.049, 45.028]
+          shift: [6.449, 45.528]    # Sweep hole moved 0.8 mm: a 4 mm hex standoff clears the ring-top socket
       hole3:
         what: mounting_hole
         where: matrix_pinky_bottom
         adjust:
-          shift: [10.623, 0.962]
+          shift: [11.123, 0.162]    # Sweep hole moved 0.9 mm: clears the pinky-bottom socket
       led1:
         what: led_0805
         where: matrix_pinky_bottom

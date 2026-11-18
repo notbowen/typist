@@ -2,14 +2,17 @@
 // the SplitKB Wireless Controller Expansion Bundle), lever toward local -y.
 // reversible: pads on both faces, mirrored, so the switch can sit on the top face
 // of either half. Mechanical NPTH pegs are shared.
-// Nets: from = pin 1 (battery side), to = pin 2 (common, to the XIAO)
+// Nets: from = battery side, to = pin 2 (common, to the XIAO). The battery is on pin 1
+// on F and on pin 3 on B, i.e. on the pad at the same board position on both faces, so
+// ON is the same lever direction (toward local +x) on both halves.
 module.exports = {
   params: { designator: 'SW', reversible: true, from: undefined, to: undefined },
   body: p => {
+    // m = 1: battery on pin 1; m = -1 (mirrored part on B): battery on pin 3
     const face = (s, m) => `
-      (pad 1 smd rect (at ${m * 2.25} 2.075 ${p.r}) (size 0.9 1.25) (layers ${s}.Cu ${s}.Paste ${s}.Mask) ${p.from})
+      (pad 1 smd rect (at ${m * 2.25} 2.075 ${p.r}) (size 0.9 1.25) (layers ${s}.Cu ${s}.Paste ${s}.Mask) ${m > 0 ? p.from : ''})
       (pad 2 smd rect (at ${m * -0.75} 2.075 ${p.r}) (size 0.9 1.25) (layers ${s}.Cu ${s}.Paste ${s}.Mask) ${p.to})
-      (pad 3 smd rect (at ${m * -2.25} 2.075 ${p.r}) (size 0.9 1.25) (layers ${s}.Cu ${s}.Paste ${s}.Mask))
+      (pad 3 smd rect (at ${m * -2.25} 2.075 ${p.r}) (size 0.9 1.25) (layers ${s}.Cu ${s}.Paste ${s}.Mask) ${m > 0 ? '' : p.from})
       (pad "" smd rect (at 3.7 -1.1 ${p.r}) (size 0.9 0.9) (layers ${s}.Cu ${s}.Paste ${s}.Mask))
       (pad "" smd rect (at 3.7 1.1 ${p.r}) (size 0.9 0.9) (layers ${s}.Cu ${s}.Paste ${s}.Mask))
       (pad "" smd rect (at -3.7 1.1 ${p.r}) (size 0.9 0.9) (layers ${s}.Cu ${s}.Paste ${s}.Mask))

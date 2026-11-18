@@ -30,7 +30,7 @@ DIMS = {
     "xiao_usb_overhang": 1.55,            # receptacle front beyond the XIAO PCB edge
     "pwr_body": (6.7, 2.6, 1.5),          # MSK12C02 along edge, depth, height
     "pwr_lever": (1.5, 2.0, 1.4),
-    "jst": (6.0, 4.25, 2.95),             # SM02B-SRSS-TB w, d, h; mouth toward +y
+    "jst": (4.0, 4.25, 2.95),             # SM02B-SRSS-TB w, d, h; mouth toward +y
     "jst_plug_reach": 4.0,                # mated plug + wire bend in front of the mouth
     "cell": (12.0, 30.0, 3.0),            # 301230 LiPo (nominal), w, l, t
     "cell_tape": 1.0,                     # Kapton + foam tape between cell and PCB
