@@ -1,0 +1,40 @@
+/* ZMK native_sim test: layer LEDs + &status_ind (no BLE, no battery in the sim). */
+#include <dt-bindings/zmk/keys.h>
+#include <behaviors.dtsi>
+#include <behaviors/status_ind.dtsi>
+#include <dt-bindings/zmk/kscan_mock.h>
+
+/ {
+    status_leds: status_leds {
+        compatible = "gpio-leds";
+        led_1 { gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>; };
+        led_2 { gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>; };
+        led_3 { gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>; };
+        led_4 { gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>; };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+        base { bindings = <&mo 1 &mo 2 &status_ind IND_BAT &mo 4>; };
+        l1   { bindings = <&trans &mo 3 &trans &trans>; };
+        l2   { bindings = <&trans &trans &trans &trans>; };
+        l3   { bindings = <&trans &trans &trans &trans>; };
+        l4   { bindings = <&trans &trans &trans &trans>; };
+    };
+};
+
+&kscan {
+    events = <
+        /* boot: thread starts at 100 ms, LEDs off */
+        ZMK_MOCK_PRESS(0,0,300)   /* &mo 1 -> LED1 */
+        ZMK_MOCK_PRESS(0,1,300)   /* + &mo 3 (from layer 1) -> LED3 only */
+        ZMK_MOCK_RELEASE(0,1,300) /* back to layer 1 -> LED1 */
+        ZMK_MOCK_RELEASE(0,0,300) /* base -> off */
+        ZMK_MOCK_PRESS(0,1,300)   /* &mo 2 -> LED2 */
+        ZMK_MOCK_RELEASE(0,1,300)
+        ZMK_MOCK_PRESS(1,1,300)   /* &mo 4 -> LED4 */
+        ZMK_MOCK_RELEASE(1,1,300)
+        ZMK_MOCK_PRESS(1,0,50)    /* &status_ind IND_BAT: no battery in the sim -> no-op */
+        ZMK_MOCK_RELEASE(1,0,500)
+    >;
+};

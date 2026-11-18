@@ -1,0 +1,10 @@
+# This zmk-config is also a Zephyr module: it carries the status-LED code
+# (src/), its Kconfig and the &status_ind behavior binding (dts/).
+# ZMK's GitHub workflow picks it up automatically (-DZMK_EXTRA_MODULES=<repo>).
+# The shield itself stays in config/boards (found through ZMK_CONFIG).
+name: sweep-status-leds
+build:
+  cmake: .
+  kconfig: Kconfig
+  settings:
+    dts_root: .

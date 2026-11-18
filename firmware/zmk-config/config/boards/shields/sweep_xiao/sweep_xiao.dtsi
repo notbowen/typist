@@ -5,7 +5,7 @@
  *                                  R0..R3 = top/home/bottom/thumb -> D5, D8, D9, D10
  * Status LEDs (active high, GPIO -> 1k -> LED -> GND), same pins on both halves:
  *   LED1 = D6, LED2 = D7, LED3 = P0.09 (NFC1 pad), LED4 = P0.10 (NFC2 pad)
- *   -> UART0 is disabled and the NFC pads are used as GPIO (see sweep_xiao.conf)
+ *   -> UART0 is disabled and the NFC pads are switched to GPIO (&uicr below)
  *   thumbs: tucky (inner) on C3, reachy (outer) on C4.
  * Diodes: switch between column and anode, cathode on the row -> col2row.
  * The right half uses the same pins; its hardware columns are also numbered
@@ -61,8 +61,16 @@ RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4)    RC(2,9) RC(2,8) RC(2,7) RC(2,6) RC(2,
     };
 };
 
-/* D6/D7 drive LEDs instead of the UART */
+/* D6/D7 drive LEDs instead of the UART (the ZMK xiao_ble board already disables
+ * xiao_serial = uart0; repeated here so the shield does not depend on that). */
 &uart0 {
     status = "disabled";
+};
+
+/* P0.09 / P0.10 are the NFC antenna pads by default. This makes Zephyr program
+ * UICR.NFCPINS on first boot so they work as plain GPIO (LED3 / LED4).
+ * Replaces the deprecated CONFIG_NFCT_PINS_AS_GPIOS. */
+&uicr {
+    nfct-pins-as-gpios;
 };
 

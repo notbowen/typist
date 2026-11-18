@@ -1,0 +1,3 @@
+s/.*set_leds: //p
+s/.*\(layer_changed\|zmk_keymap_layer_activate\|zmk_keymap_layer_deactivate\): //p
+s/.*status_ind_pressed: //p
