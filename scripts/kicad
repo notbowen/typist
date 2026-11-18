@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Run a command inside the KiCad 9 container with the repo mounted at the
+# same absolute path, so paths are identical inside and outside.
+#   scripts/kicad kicad-cli pcb drc ...
+#   scripts/kicad python3 scripts/pcb/some_pcbnew_script.py ...
+set -euo pipefail
+IMAGE="${KICAD_IMAGE:-kicad/kicad:9.0}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "pulling $IMAGE ..." >&2
+  docker pull -q "$IMAGE" >&2
+fi
+exec docker run --rm -i \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp -e KICAD_CONFIG_HOME=/tmp/kicad-config \
+  -v "$ROOT:$ROOT" -w "$PWD" \
+  "$IMAGE" "$@"

@@ -1,0 +1,12 @@
+/build/
+/.venv/
+/node_modules/
+/tools/
+__pycache__/
+*.pyc
+# KiCad backups / locks / local settings
+*-backups/
+*.lck
+fp-info-cache
+*.kicad_prl
+_autosave-*

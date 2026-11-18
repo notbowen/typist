@@ -1,0 +1,208 @@
+# Sweep-style 34-key split keyboard (reference layout).
+# Choc spacing, 5x3 + 2 thumbs per half, direct-pin (no diodes),
+# Pro Micro footprint controller, TRRS interconnect.
+# Build with: scripts/build_pcb.sh   (outputs land in build/)
+meta:
+  engine: 4.2.1
+  name: sweep-style
+  version: 0.1.0
+  author: lapiz
+
+units:
+  kx: cx              # choc key spacing 18 x 17 mm
+  ky: cy
+  px: kx + 3          # board padding around keys (hotswap pads need >=0.5mm edge clearance)
+  py: ky + 3
+
+points:
+  zones:
+    matrix:
+      anchor:
+        shift: [100, -100]       # keep everything in positive KiCad space
+      key:
+        padding: ky
+        spread: kx
+      columns:
+        pinky:
+          key.column_net: P21
+        ring:
+          key.stagger: 0.66 ky
+        middle:
+          key.stagger: 0.25 ky
+        index:
+          key.stagger: -0.25 ky
+        inner:
+          key.stagger: -0.15 ky
+      rows:
+        bottom:
+        home:
+        top:
+    thumb:
+      anchor:
+        ref: matrix_index_bottom
+        shift: [-0.1 kx, -1.05 ky]
+        rotate: -8
+      key:
+        spread: kx
+        splay: -12
+        origin: [-0.5 kx, -0.5 ky]
+      columns:
+        tucky:
+        reachy:
+      rows:
+        cluster:
+  rotate: -8
+  mirror:
+    ref: matrix_inner_home
+    distance: 4 kx
+
+outlines:
+  # --- left half -------------------------------------------------------
+  _keys_left:
+    - what: rectangle
+      where: "/^(matrix|thumb)_/"
+      size: [px, py]
+  _mcu_left:
+    - what: rectangle
+      where: matrix_inner_top
+      adjust:
+        shift: [1.1 kx, -14]
+      size: [22, 50]
+  _raw_left:
+    - _keys_left
+    - +_mcu_left
+  _grown_left:
+    - what: outline
+      name: _raw_left
+      expand: 4           # grow (round) ...  NOTE: makerjs can emit self-intersecting
+                          # arcs for some values (5,7,8 fail here) - DRC catches invalid_outline
+  left_board:
+    - what: outline
+      name: _grown_left
+      expand: -4          # ... then shrink: fills stagger notches, rounds corners
+  # --- right half (mirror image) ---------------------------------------
+  _keys_right:
+    - what: rectangle
+      where: "/^mirror_/"
+      size: [px, py]
+  _mcu_right:
+    - what: rectangle
+      where: mirror_matrix_inner_top
+      adjust:
+        shift: [1.1 kx, -14]
+      size: [22, 50]
+  _raw_right:
+    - _keys_right
+    - +_mcu_right
+  _grown_right:
+    - what: outline
+      name: _raw_right
+      expand: 4
+  right_board:
+    - what: outline
+      name: _grown_right
+      expand: -4
+
+pcbs:
+  left:
+    template: kicad8
+    outlines:
+      edge:
+        outline: left_board
+    footprints:
+      keys:
+        what: choc
+        where: "/^(matrix|thumb)_/"
+        params:
+          hotswap: true
+          keycaps: true
+          from: "{{name}}"
+          to: GND
+      mcu:
+        what: promicro
+        where: matrix_inner_top
+        adjust:
+          shift: [1.1 kx, -0.6 ky]
+          rotate: -90
+        params:
+          orientation: down
+          P21: matrix_pinky_top
+          P20: matrix_ring_top
+          P19: matrix_middle_top
+          P18: matrix_index_top
+          P15: matrix_inner_top
+          P14: matrix_pinky_home
+          P16: matrix_ring_home
+          P10: matrix_middle_home
+          P1: matrix_index_home
+          P0: matrix_inner_home
+          P2: matrix_pinky_bottom
+          P4: matrix_ring_bottom
+          P5: matrix_middle_bottom
+          P6: matrix_index_bottom
+          P7: matrix_inner_bottom
+          P8: thumb_tucky_cluster
+          P9: thumb_reachy_cluster
+          P3: SERIAL           # QMK default SOFT_SERIAL_PIN D0
+      trrs:
+        what: trrs
+        where: matrix_inner_top
+        adjust:
+          shift: [1.1 kx + 11.5, -33]
+          rotate: -90
+        params:
+          A: GND
+          B: GND
+          C: SERIAL
+          D: VCC
+  right:
+    template: kicad8
+    outlines:
+      edge:
+        outline: right_board
+    footprints:
+      keys:
+        what: choc
+        where: "/^mirror_/"
+        params:
+          hotswap: true
+          keycaps: true
+          from: "{{name}}"
+          to: GND
+      mcu:
+        what: promicro
+        where: mirror_matrix_inner_top
+        adjust:
+          shift: [1.1 kx, -0.6 ky]
+          rotate: -90
+        params:
+          orientation: down
+          P21: mirror_matrix_pinky_top
+          P20: mirror_matrix_ring_top
+          P19: mirror_matrix_middle_top
+          P18: mirror_matrix_index_top
+          P15: mirror_matrix_inner_top
+          P14: mirror_matrix_pinky_home
+          P16: mirror_matrix_ring_home
+          P10: mirror_matrix_middle_home
+          P1: mirror_matrix_index_home
+          P0: mirror_matrix_inner_home
+          P2: mirror_matrix_pinky_bottom
+          P4: mirror_matrix_ring_bottom
+          P5: mirror_matrix_middle_bottom
+          P6: mirror_matrix_index_bottom
+          P7: mirror_matrix_inner_bottom
+          P8: mirror_thumb_tucky_cluster
+          P9: mirror_thumb_reachy_cluster
+          P3: SERIAL           # QMK default SOFT_SERIAL_PIN D0
+      trrs:
+        what: trrs
+        where: mirror_matrix_inner_top
+        adjust:
+          shift: [1.1 kx + 11.5, -33]
+          rotate: -90
+        params:
+          A: GND
+          B: GND
+          C: SERIAL
+          D: VCC
