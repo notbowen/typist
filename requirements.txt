@@ -1,3 +1,4 @@
 # Python helpers (installed into .venv by scripts/setup.sh). KiCad's own Python runs in Docker.
 shapely==2.2.0        # scripts/ergogen/sweep_outline.py (outline maths)
 CairoSVG==2.9.1       # scripts/pcb/plot.sh: KiCad SVG -> PNG
+fonttools==4.68.0      # scripts/pcb/silk_logo.py: glyph outlines for the silk logo
