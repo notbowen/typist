@@ -349,7 +349,7 @@ ${pf.map((q, i) => `<tr><td>${st.length + i + 1}</td><td>${where(q)}</td><td>adh
   <rect x="30" y="${132 - footH * 10}" width="40" height="${footH * 10}" rx="4" fill="#3a3a3c"/><text x="24" y="147">foot ${footH}</text>
   <rect x="345" y="${132 - DM.bumpon[1] * 10}" width="40" height="${DM.bumpon[1] * 10}" rx="4" fill="#3a3a3c"/>
   <rect x="355" y="${132 - stackH * 10}" width="20" height="${DM.standoff[1] * 10}" fill="#d8c48a"/><text x="285" y="147">standoff ${DM.standoff[1]} + SJ5076 ${DM.bumpon[1]}</text>
-  <rect x="20" y="${132 - footH * 10 - T * 10}" width="380" height="${T * 10}" fill="#1f5a35"/><text x="75" y="${132 - footH * 10 - T * 10 - 4}">PCB ${T}</text>
+  <rect x="20" y="${132 - footH * 10 - T * 10}" width="380" height="${T * 10}" fill="#bba86f"/><text x="75" y="${132 - footH * 10 - T * 10 - 4}">PCB ${T}</text>
   <rect x="90" y="${132 - footH * 10}" width="50" height="${DM.socket_box[2] * 10}" fill="#222"/><text x="92" y="${132 - footH * 10 + DM.socket_box[2] * 10 + 11}">socket ${DM.socket_box[2]}</text>
   <rect x="170" y="${132 - footH * 10}" width="140" height="${DM.cell_tape * 10}" fill="#e8e3d6"/>
   <rect x="170" y="${132 - footH * 10 + DM.cell_tape * 10}" width="140" height="${DM.cell[2] * 10}" rx="3" fill="#b8bcc6"/><text x="190" y="${132 - footH * 10 + (DM.cell_tape + DM.cell[2]) * 10 - 10}">tape ${DM.cell_tape} + LiPo ${DM.cell[2]}</text>
@@ -388,7 +388,7 @@ document.getElementById('bom').innerHTML = `
 <div>Layers / material</div><div>2 layers, FR-4, 1.6 mm, 1 oz outer copper</div>
 <div>Dimensions</div><div>${fmt(bw)} × ${fmt(bh)} mm (detected from the gerbers). That's over 100 × 100 mm, so not the cheapest promo tier.</div>
 <div>Min track / hole</div><div>0.15 mm / 0.3 mm vias: standard capabilities, no surcharge</div>
-<div>Colour / silk</div><div>Any (green is fastest), white silk</div>
+<div>Solder mask / silk</div><div><b>Clear (transparent) solder mask</b> on both sides, white silk. The copper pour and tracks show through it. Check that the order page offers a clear/transparent mask option before ordering; if it doesn't, the same gerbers work at any fab that does, since the mask layers themselves don't change.</div>
 <div>Surface finish</div><div>HASL lead-free or ENIG. ENIG is flatter and easier for the XIAO's castellations and the 0805s.</div>
 <div>Castellated holes / edge plating</div><div>No (the castellations are on the XIAO, not this board)</div>
 <div>Order number</div><div>JLC prints one on the board by default. Pick "remove" (small fee) if you mind, since both faces are visible on some half.</div>
@@ -446,14 +446,24 @@ function shapeFrom(pts) {
   return s;
 }
 
+// clear (transparent) solder mask over natural FR-4; exposed pads are ENIG/HASL
+const BOARD_COL = { fr4: '#d2c38e', cu: '#c97a45', edge: '#bba86f' };
+
 function pcbTexture(layer) {
   const k = 14, W = Math.ceil((maxx - minx) * k), H = Math.ceil((maxy - miny) * k);
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
   const X = x => (x - minx) * k, Y = y => (maxy - y) * k;
   const cu = layer + '.Cu';
-  g.fillStyle = '#1f5a35'; g.fillRect(0, 0, W, H);
-  g.strokeStyle = '#2f7a4a'; g.lineCap = 'round';
+  // clear solder mask: the FR-4 core and all copper (pour + tracks) show through it
+  g.fillStyle = BOARD_COL.fr4; g.fillRect(0, 0, W, H);
+  g.fillStyle = BOARD_COL.cu;
+  for (const rings of (B.zones || {})[cu] || []) {
+    g.beginPath();
+    for (const r of rings) r.forEach((q, i) => i ? g.lineTo(X(q[0]), Y(q[1])) : g.moveTo(X(q[0]), Y(q[1])));
+    g.fill('evenodd');
+  }
+  g.strokeStyle = BOARD_COL.cu; g.lineCap = 'round';
   for (const [x1, y1, x2, y2, w, ly] of B.tracks) {
     if (ly !== cu) continue;
     g.lineWidth = w * k; g.beginPath(); g.moveTo(X(x1), Y(y1)); g.lineTo(X(x2), Y(y2)); g.stroke();
@@ -520,7 +530,7 @@ function labelSprite(txt, sub) {
 const shape = shapeFrom(B.outline);
 const pcbBodyGeo = new THREE.ExtrudeGeometry(shape, { depth: T - 0.04, bevelEnabled: false });
 const pcbFaceGeo = new THREE.ShapeGeometry(shape);
-const pcbBodyMat = mat('#1d4f30');
+const pcbBodyMat = mat(BOARD_COL.edge);
 const faceMat = { F: mat('#ffffff', { map: pcbTexture('F'), roughness: 0.55 }),
                   B: mat('#ffffff', { map: pcbTexture('B'), roughness: 0.55, side: THREE.BackSide }) };
 const capMat = mat('#f6f5f1', { roughness: 0.55 });

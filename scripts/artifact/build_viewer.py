@@ -73,6 +73,21 @@ def socket_boxes(fp, pads):
     return out
 
 
+def zone_rings(zones):
+    """Filled pours per copper layer as [[outer, hole, ...], ...], simplified to 0.02 mm so the
+    viewer can draw the copper that shows through the clear solder mask."""
+    out = {}
+    for z in zones:
+        for rings in z["polys"]:
+            poly = Polygon(rings[0], rings[1:]).simplify(0.02, preserve_topology=True)
+            for pg in getattr(poly, "geoms", [poly]):
+                if pg.is_empty:
+                    continue
+                r = lambda c: [[round(x, 2), round(y, 2)] for x, y in c.coords[:-1]]
+                out.setdefault(z["layer"], []).append([r(pg.exterior)] + [r(h) for h in pg.interiors])
+    return out
+
+
 def main(out: str):
     g, drc = load(f"{BOARD}.geom.json"), load(f"{BOARD}-drc.json")
     fps = g["footprints"]
@@ -154,7 +169,8 @@ def main(out: str):
                            for p in g["pads"] if p["poly"]],
                   "holes": [[h["x"], h["y"], h["d"]] for h in g["npth"]],
                   "pth": [[p["x"], p["y"]] for p in g["pads"] if p["type"] == "pth"],
-                  "tracks": g.get("tracks", []), "vias": g.get("vias", [])},
+                  "tracks": g.get("tracks", []), "vias": g.get("vias", []),
+                  "zones": zone_rings(g.get("zones", []))},
         "keys": keys, "diodes": diodes,
         "xiao": {k: xiao[k] for k in ("x", "y", "rot")},
         "pwr": {"x": pwr["x"], "y": pwr["y"], "rot": pwr["rot"], "lever": [round(v, 6) for v in lever]},

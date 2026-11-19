@@ -105,6 +105,10 @@ Look at after changes:
 - Power switch: the battery pad is at the same board position on both faces (pin 1 on F, pin 3
   on B), so ON is the same lever direction on both halves. JST-SH pads follow KiCad's
   `JST_SH_SM02B-SRSS-TB_1x02-1MP` (anchor tabs at +-1.8 mm, 3.875 mm from the pin row).
+- **Clear (transparent) solder mask**, white silk, ENIG: set in the board stackup of
+  `pcb/sweep.kicad_pcb` (mask colour `#E8EDE440`, FR4 natural core) so KiCad's 3D renders show it;
+  the viewer draws FR-4 + copper (pour from `geom.json` `zones`, tracks) under the clear mask
+  (`BOARD_COL` in `viewer_template.html`). The mask colour is an order option, not a gerber change.
 - `make pcb-strict` must pass before fab. Routed board lives in `pcb/sweep.kicad_pcb`.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.
 

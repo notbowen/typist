@@ -12,6 +12,8 @@ JSON fields:
   npth                [{ref, x, y, d}]   non-plated holes (switch centre posts etc.)
   tracks              [[x1, y1, x2, y2, width, layer]]  copper tracks (for previews)
   vias                [[x, y, size, drill]]
+  zones               [{layer, net, polys:[[outer, hole, ...], ...]}]  filled copper pours (visible
+                      through a clear solder mask)
 """
 import json, sys
 import pcbnew
@@ -70,10 +72,24 @@ for t in b.GetTracks():
     elif t.Type() == pcbnew.PCB_TRACE_T:
         tracks.append(pt(t.GetStart()) + pt(t.GetEnd()) + [round(mm(t.GetWidth()), 3), b.GetLayerName(t.GetLayer())])
 
+zones = []
+for z in b.Zones():
+    if z.GetIsRuleArea():
+        continue
+    for lid in z.GetLayerSet().CuStack():
+        if lid not in (pcbnew.F_Cu, pcbnew.B_Cu) or not z.HasFilledPolysForLayer(lid):
+            continue
+        fp = z.GetFilledPolysList(lid)
+        polys = []
+        for i in range(fp.OutlineCount()):
+            polys.append([chain(fp.Outline(i))] + [chain(fp.Hole(i, h)) for h in range(fp.HoleCount(i))])
+        if polys:
+            zones.append({"layer": b.GetLayerName(lid), "net": z.GetNetname(), "polys": polys})
+
 json.dump({
     "source": src,
     "thickness": round(mm(b.GetDesignSettings().GetBoardThickness()), 3),
     "outline": outline, "footprints": fps, "pads": pads, "npth": npth,
-    "tracks": tracks, "vias": vias,
+    "tracks": tracks, "vias": vias, "zones": zones,
 }, open(dst, "w"), indent=1)
-print(f"{dst}: {len(outline)} outline loops, {len(fps)} footprints, {len(pads)} pads, {len(npth)} npth")
+print(f"{dst}: {len(outline)} outline loops, {len(fps)} footprints, {len(pads)} pads, {len(npth)} npth, {len(zones)} zone fills")
