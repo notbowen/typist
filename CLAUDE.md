@@ -105,6 +105,11 @@ Look at after changes:
 - Power switch: the battery pad is at the same board position on both faces (pin 1 on F, pin 3
   on B), so ON is the same lever direction on both halves. JST-SH pads follow KiCad's
   `JST_SH_SM02B-SRSS-TB_1x02-1MP` (anchor tabs at +-1.8 mm, 3.875 mm from the pin row).
+- Logo: the keyboard is called **typist**; the "typ|st" wordmark (the i is a text cursor, JetBrains
+  Mono ExtraBold, 16 x 6.2 mm) is on both silk layers at (175.86, 77.2), the only spot visible with
+  caps on (under the middle column, above the LEDs). It is baked into `pcb/sweep.kicad_pcb` as
+  filled polygons by `scripts/pcb/silk_logo.py ibeam in out` (B copy mirrored so it reads on the
+  right half). The script appends; run it only on a board without the logo (e.g. after re-routing).
 - `make pcb-strict` must pass before fab. Routed board lives in `pcb/sweep.kicad_pcb`.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.
 

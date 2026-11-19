@@ -34,6 +34,11 @@ if ! echo "$FR_SHA256  tools/freerouting.jar" | sha256sum -c --status 2>/dev/nul
   echo "$FR_SHA256  tools/freerouting.jar" | sha256sum -c
 fi
 
+step "logo font (JetBrains Mono ExtraBold, OFL; scripts/pcb/silk_logo.py)"
+mkdir -p tools/fonts
+[ -s tools/fonts/JetBrainsMono-ExtraBold.ttf ] || curl -fsSL -o tools/fonts/JetBrainsMono-ExtraBold.ttf \
+  "https://github.com/JetBrains/JetBrainsMono/raw/master/fonts/ttf/JetBrainsMono-ExtraBold.ttf"
+
 step "check"
 scripts/kicad-cli version
 npx ergogen --version
