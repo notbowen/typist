@@ -109,6 +109,11 @@ Look at after changes:
   `pcb/sweep.kicad_pcb` (mask colour `#E8EDE440`, FR4 natural core) so KiCad's 3D renders show it;
   the viewer draws FR-4 + copper (pour from `geom.json` `zones`, tracks) under the clear mask
   (`BOARD_COL` in `viewer_template.html`). The mask colour is an order option, not a gerber change.
+- Logo: the keyboard is called **typist**; the "typ|st" wordmark (the i is a text cursor, JetBrains
+  Mono ExtraBold, 16 x 6.2 mm) is on both silk layers at (175.86, 77.2), the only spot visible with
+  caps on (under the middle column, above the LEDs). It is baked into `pcb/sweep.kicad_pcb` as
+  filled polygons by `scripts/pcb/silk_logo.py ibeam in out` (B copy mirrored so it reads on the
+  right half). The script appends; run it only on a board without the logo (e.g. after re-routing).
 - `make pcb-strict` must pass before fab. Routed board lives in `pcb/sweep.kicad_pcb`.
 - `build/`, `.venv/`, `node_modules/`, `tools/` are gitignored and reproducible via `make setup`.
 
