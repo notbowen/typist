@@ -7,8 +7,8 @@ with a Seeed XIAO nRF52840 per half, 4 status LEDs per half, a plug-in LiPo cell
 Choc v1 hotswap sockets (Kailh Choc Sunset switches, blank white MBK caps) and ZMK firmware. No case:
 the bare board stands on rubber feet. Comes with a headless design-and-verify toolchain.
 
-**[`index.html`](index.html)** is the current interactive 3D render of both halves with the spec sheet,
-BOM and build guide (self-contained; open it in a browser).
+**Live viewer: <https://notbowen.github.io/typist/>** — the current interactive 3D render of both
+halves with the spec sheet, BOM and build guide ([`index.html`](index.html), served by GitHub Pages).
 
 ```sh
 make setup   # toolchain: Python venv, ergogen, KiCad 9 + JRE docker images, Freerouting

@@ -50,7 +50,9 @@ Look at after changes:
 that affects the board, parts, feet or spec sheet (PCB, `build_viewer.py`, `viewer_template.html`,
 outline, footprints), run `make pcb && make viewer` and commit the regenerated `index.html` with
 the change. Update this file (via `make viewer`, never by hand-editing it) rather than creating
-other viewer copies; publish it as the Lapiz artifact from there.
+other viewer copies; publish it as the Lapiz artifact from there. GitHub Pages serves it from
+`main` (root, `.nojekyll`) at https://notbowen.github.io/typist/ — it goes live once the commit
+reaches `origin/main`.
 
 ## Tools and where they live
 
