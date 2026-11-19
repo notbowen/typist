@@ -113,10 +113,15 @@ reaches `origin/main`.
 - Power switch: the battery pad is at the same board position on both faces (pin 1 on F, pin 3
   on B), so ON is the same lever direction on both halves. JST-SH pads follow KiCad's
   `JST_SH_SM02B-SRSS-TB_1x02-1MP` (anchor tabs at +-1.8 mm, 3.875 mm from the pin row).
-- **Clear (transparent) solder mask**, white silk, ENIG: set in the board stackup of
-  `pcb/sweep.kicad_pcb` (mask colour `#E8EDE440`, FR4 natural core) so KiCad's 3D renders show it;
-  the viewer draws FR-4 + copper (pour from `geom.json` `zones`, tracks) under the clear mask
-  (`BOARD_COL` in `viewer_template.html`). The mask colour is an order option, not a gerber change.
+- **Black-core FR-4 under a clear (transparent) solder mask**, white silk, ENIG: set in the board
+  stackup of `pcb/sweep.kicad_pcb` (mask colour `#E8EDE440`, core `#101012FF`) so KiCad's 3D
+  renders show it; the viewer draws black core + copper under the clear mask (`BOARD_COL` in
+  `viewer_template.html`). Core and mask colour are order options, not gerber changes (PCBWay
+  "Black FR4" + clear mask, OSH Park After Dark; unconfirmed at JLCPCB).
+- **No GND pour** in the committed board: a pour would show as a solid copper (orange) sheet
+  through the clear mask. GND is fully routed as 0.2 mm tracks (`pcb-strict` passes without the
+  zones). `make route` still adds pours via `add_zones.py`; delete the two GND zones (keep the
+  `antenna_no_pour` rule area) before copying a re-routed board to `pcb/`.
 - Logo: the keyboard is called **typist**; the "typ|st" wordmark (the i is a text cursor, JetBrains
   Mono ExtraBold, 16 x 6.2 mm) is on both silk layers at (175.86, 77.2), the only spot visible with
   caps on (under the middle column, above the LEDs). It is baked into `pcb/sweep.kicad_pcb` as
