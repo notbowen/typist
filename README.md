@@ -7,11 +7,14 @@ with a Seeed XIAO nRF52840 per half, 4 status LEDs per half, a plug-in LiPo cell
 Choc v1 hotswap sockets (Kailh Choc Sunset switches, blank white MBK caps) and ZMK firmware. No case:
 the bare board stands on rubber feet. Comes with a headless design-and-verify toolchain.
 
+**[`index.html`](index.html)** is the current interactive 3D render of both halves with the spec sheet,
+BOM and build guide (self-contained; open it in a browser).
+
 ```sh
 make setup   # toolchain: Python venv, ergogen, KiCad 9 + JRE docker images, Freerouting
 make all     # layout -> PCB (DRC, plots)
 make fab     # build/fab/sweep-gerbers.zip for JLCPCB (2 layers, 1.6 mm; 5 boards = 2 keyboards)
-make viewer  # interactive 3D model of both halves + spec sheet, BOM, build guide (build/artifact/)
+make viewer  # interactive 3D model of both halves + spec sheet, BOM, build guide (index.html)
 ```
 
 - `ergogen/config.yaml` — key layout, board outlines, footprints and nets

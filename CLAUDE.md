@@ -23,7 +23,7 @@ ergogen/config.yaml ──ergogen──► build/ergogen/pcbs/sweep.kicad_pcb   
                      pcbnew export_geometry.py ──► build/pcb/sweep.geom.json
                                         ▼
 scripts/artifact/build_viewer.py (parts list, feet placement) + viewer_template.html (three.js)
-   ──► build/artifact/sweep-xiao.html   (both halves, spec sheet; published as a Lapiz artifact)
+   ──► index.html   (repo root, COMMITTED: both halves, spec sheet; also published as a Lapiz artifact)
 ```
 
 ## Commands
@@ -37,14 +37,20 @@ scripts/artifact/build_viewer.py (parts list, feet placement) + viewer_template.
 | `make route SIDE=sweep` | Freerouting, then GND pour (~10 min) → `build/pcb/sweep-routed.kicad_pcb` |
 | `make fab` | gerbers+drill zip, pos csv, board STEP → `build/fab/` |
 | `make verify` | release gate: `pcb-strict` |
-| `make viewer` | interactive HTML viewer + spec sheet → `build/artifact/sweep-xiao.html` (needs `make pcb` outputs) |
+| `make viewer` | interactive HTML viewer + spec sheet → `index.html` in the repo root (needs `make pcb` outputs) |
 
 Look at after changes:
 - `build/pcb/sweep-2d.png` — outline, pads, tracks, silk (fastest PCB sanity view)
 - `build/pcb/sweep-3d-{top,bottom}.png` — KiCad 3D render (bottom = how the right half looks from above)
 - `build/pcb/sweep-drc.json` — machine-readable DRC result (the viewer's verification block reads it)
-- `build/artifact/sweep-xiao.html` — serve it (`python3 -m http.server -d build/artifact`) and check it
+- `index.html` — serve it (`python3 -m http.server`) and check it
   with the browser tool: both halves, Under view, LED toggle, explode, mobile width
+
+**`index.html` (repo root) is the canonical, committed render of the design.** After any change
+that affects the board, parts, feet or spec sheet (PCB, `build_viewer.py`, `viewer_template.html`,
+outline, footprints), run `make pcb && make viewer` and commit the regenerated `index.html` with
+the change. Update this file (via `make viewer`, never by hand-editing it) rather than creating
+other viewer copies; publish it as the Lapiz artifact from there.
 
 ## Tools and where they live
 

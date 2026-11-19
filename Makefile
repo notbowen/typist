@@ -19,7 +19,7 @@ help:
 	@echo "make fab          gerbers/drill zip, pos, STEP per side"
 	@echo "make all          ergogen pcb"
 	@echo "make verify       pcb-strict (release gate)"
-	@echo "make viewer       interactive 3D viewer + spec sheet -> build/artifact/sweep-xiao.html"
+	@echo "make viewer       interactive 3D viewer + spec sheet -> index.html (committed)"
 	@echo "Boards: pcb/<side>.kicad_pcb if present, else $(ERGO)/<side>.kicad_pcb"
 
 setup:
@@ -60,7 +60,7 @@ verify: pcb-strict
 
 viewer:
 	@[ -f build/pcb/sweep.geom.json ] || $(MAKE) pcb
-	$(PY) scripts/artifact/build_viewer.py build/artifact/sweep-xiao.html
+	$(PY) scripts/artifact/build_viewer.py index.html
 
 clean:
 	rm -rf build
